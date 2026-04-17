@@ -24,6 +24,7 @@
     "react-dom": ">=18.3.0"
   },
   "devDependencies": {
+    "@growing/contracts": "file:../contracts",
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-interactions": "^8.6.14",
     "@storybook/react-vite": "^8.6.14",
