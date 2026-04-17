@@ -1,0 +1,32 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import { UxButton } from "./UxButton";
+
+const meta: Meta<typeof UxButton> = {
+  title: "Components/UxButton",
+  component: UxButton,
+  tags: ["autodocs"],
+  args: {
+    children: "Click me"
+  }
+};
+
+export default meta;
+type Story = StoryObj<typeof UxButton>;
+
+export const Primary: Story = {
+  args: {
+    variant: "primary"
+  }
+};
+
+export const Secondary: Story = {
+  args: {
+    variant: "secondary"
+  }
+};
+
+export const Ghost: Story = {
+  args: {
+    variant: "ghost"
+  }
+};
