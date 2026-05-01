@@ -39,7 +39,7 @@ export function UxBrandsModalPresentation({
             <h3 style={styles.title}>{title}</h3>
             <p style={styles.subtitle}>Breeders list with faster visual navigation.</p>
           </div>
-          <button onClick={onClose} style={styles.iconButton} aria-label="Close modal" title="Close">
+          <button type="button" onClick={onClose} style={styles.iconButton} aria-label="Close modal" title="Close">
             <CloseIcon />
           </button>
         </div>
@@ -109,9 +109,21 @@ const styles: Record<string, CSSProperties> = {
     gap: 12
   },
   header: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" },
-  titleWrap: { display: "grid", gap: 8 },
-  title: { margin: 0, fontSize: 21, color: "#172b59" },
-  subtitle: { margin: 0, color: "#5f6d8b", fontSize: 13, paddingLeft: 2 },
+  titleWrap: {
+    flex: 1,
+    minWidth: 0,
+    display: "grid",
+    gap: 8,
+    textAlign: "left"
+  },
+  title: {
+    margin: 0,
+    fontSize: 21,
+    color: "#172b59",
+    textAlign: "left",
+    fontWeight: 600
+  },
+  subtitle: { margin: 0, color: "#5f6d8b", fontSize: 13, textAlign: "left" },
   searchWrap: { position: "relative" },
   searchIcon: {
     position: "absolute",
@@ -146,6 +158,7 @@ const styles: Record<string, CSSProperties> = {
   avatarStub: { width: 28, height: 28, borderRadius: 6, background: "#edf2ff" },
   footer: { display: "flex", justifyContent: "space-between", marginTop: 12 },
   iconButton: {
+    flexShrink: 0,
     border: "1px solid #d4deef",
     background: "#fff",
     borderRadius: 10,

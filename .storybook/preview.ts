@@ -1,13 +1,18 @@
 import type { Preview } from "@storybook/react";
+import { ConfigProvider } from "antd";
 import { createElement } from "react";
 
 const preview: Preview = {
   decorators: [
     Story =>
       createElement(
-        "div",
-        { style: { fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif" } },
-        createElement(Story)
+        ConfigProvider,
+        {},
+        createElement(
+          "div",
+          { style: { fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif" } },
+          createElement(Story)
+        )
       ),
   ],
   parameters: {

@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 export type UxBrandOption = {
   id: string;
@@ -55,6 +55,23 @@ export function UxProductsModalPresentation({
     [brands, selectedBrandId]
   );
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [open, onClose]);
+
   if (!open) {
     return null;
   }
@@ -81,7 +98,7 @@ export function UxProductsModalPresentation({
             <h3 style={styles.title}>{title}</h3>
             <p style={styles.subtitle}>Breeders and Products list: pick a brand, then select product.</p>
           </div>
-          <button onClick={onClose} style={styles.iconButton} aria-label="Close modal" title="Close">
+          <button type="button" onClick={onClose} style={styles.iconButton} aria-label="Close modal" title="Close">
             <CloseIcon />
           </button>
         </div>
@@ -208,9 +225,21 @@ const styles: Record<string, CSSProperties> = {
     gap: 12
   },
   header: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" },
-  titleWrap: { display: "grid", gap: 8 },
-  title: { margin: 0, fontSize: 21, color: "#172b59" },
-  subtitle: { margin: 0, color: "#5f6d8b", fontSize: 13, paddingLeft: 2 },
+  titleWrap: {
+    flex: 1,
+    minWidth: 0,
+    display: "grid",
+    gap: 8,
+    textAlign: "left"
+  },
+  title: {
+    margin: 0,
+    fontSize: 21,
+    color: "#172b59",
+    textAlign: "left",
+    fontWeight: 600
+  },
+  subtitle: { margin: 0, color: "#5f6d8b", fontSize: 13, textAlign: "left" },
   controls: { display: "grid", gap: 10, marginBottom: 2 },
   searchWrap: {
     position: "relative",
@@ -261,8 +290,8 @@ const styles: Record<string, CSSProperties> = {
   productListLabel: {
     fontSize: 12.5,
     color: "#4b5f89",
-    paddingLeft: 2,
-    marginTop: -2
+    marginTop: -2,
+    textAlign: "left"
   },
   selectedBrandTag: {
     display: "inline-flex",
@@ -297,6 +326,7 @@ const styles: Record<string, CSSProperties> = {
   },
   footer: { display: "flex", justifyContent: "space-between", marginTop: 12 },
   iconButton: {
+    flexShrink: 0,
     border: "1px solid #d4deef",
     background: "#fff",
     borderRadius: 10,

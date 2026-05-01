@@ -1,5 +1,24 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import type { PlantPeriodPhase } from "@growing/contracts";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Flex,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  Row,
+  Select,
+  Space,
+  Table,
+  Typography,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import type { PlantPeriodPhase, PlantPotType } from "@growing/contracts";
 
 import {
   UxProductsModalPresentation,
@@ -7,21 +26,60 @@ import {
   type UxProductOption,
 } from "./UxProductsModalPresentation";
 import { UxPeriodField } from "./UxPeriodField";
+import { UxSelectedProductCard, type UxSelectedProductCardProps } from "./UxSelectedProductCard";
+import type { UxPlantBatchTableColumnLabels } from "./UxPlantBatchTableColumns";
+import {
+  uxPlantBatchAvatarColumn,
+  uxPlantBatchNameWithLabelColumn,
+  uxPlantBatchPeriodColumn,
+  uxPlantBatchPotColumn,
+  uxPlantBatchProductColumn,
+  uxPlantBatchQuantityColumn,
+} from "./UxPlantBatchTableColumns";
+import { UxPlantBatchGroupsTableEmpty } from "./UxPlantBatchGroupsTableEmpty";
+import { UX_PLANT_BATCH_TABLE_STYLES } from "./UxPlantBatchTableStyles";
 
-type UxCreateBatchItem = {
+export type UxCreateBatchItem = {
   id: string;
   name: string;
   quantity: number;
   itemLabel: string;
+  /** Catalog product id when chosen from picker (optional for legacy / story data). */
+  productId: string;
   productLabel: string;
-  potType: string;
+  productAvatarUrl: string;
+  productSubtitle: string;
+  potType: PlantPotType | "";
   potSize: string;
   period: PlantPeriodPhase | "";
+  /** When editing an existing batch: backend plant id for this row (quantity locked to 1). */
+  sourcePlantId?: string;
+};
+
+/** Host app can render the chosen product (e.g. `ProductsBar.Item` in the main frontend). */
+export type UxCreateBatchRenderSelectedProductArgs = {
+  productId: string;
+  name: string;
+  subtitle?: string;
+  avatarUrl?: string;
+  loading: boolean;
+  /** True when the modal uses dense form controls; host can match sizing. */
+  compact?: boolean;
+  onOpenPicker: () => void;
+  onClear: () => void;
 };
 
 export type UxCreateBatchSubmitPayload = {
   batchName: string;
+  /** Set when optional diary selector is shown and user picks a diary. */
+  diaryId?: string;
   items: Array<Omit<UxCreateBatchItem, "id">>;
+};
+
+export type UxCreateBatchDiarySelectConfig = {
+  label: string;
+  placeholderOption: string;
+  options: Array<{ value: string; label: string }>;
 };
 
 export type UxCreateBatchProductsModalConfig = {
@@ -38,35 +96,148 @@ export type UxCreateBatchProductsModalConfig = {
   onSelectBrand?: (brandId: string) => void;
 };
 
+/** Passed to `confirmRemoveGroup` before a table row is removed (draft-only; no API). */
+export type UxCreateBatchRemoveGroupContext = {
+  name: string;
+  quantity: number;
+  productLabel: string;
+  itemLabel: string;
+  /** True when removing the only row — table becomes empty (placeholder). */
+  isLastGroup: boolean;
+};
+
+export type UxCreateBatchGroupsTableEmptyCopy = {
+  title: string;
+  description: string;
+  addButton: string;
+  submitErrorWhenEmpty: string;
+};
+
 export type UxCreateBatchModalProps = {
   open: boolean;
   title?: string;
   loading?: boolean;
   productsModal?: UxCreateBatchProductsModalConfig;
+  /** Optional diary binding (e.g. Nest `diaryId` on batch / plants). */
+  diarySelect?: UxCreateBatchDiarySelectConfig;
+  /** Copy for the default selected-product card (e.g. Russian in the main app). */
+  productCardLabels?: UxSelectedProductCardProps["labels"];
+  /**
+   * When set, used for the **selected** product row in the group editor instead of the built-in card.
+   * Empty state still uses `UxSelectedProductCard` + `productCardLabels`.
+   */
+  renderSelectedProduct?: (args: UxCreateBatchRenderSelectedProductArgs) => ReactNode;
+  /**
+   * Host app confirmation before removing a group from the batch table (e.g. Ant Design `Modal.confirm`).
+   * Return `false` to cancel. Omit to remove immediately.
+   */
+  confirmRemoveGroup?: (ctx: UxCreateBatchRemoveGroupContext) => boolean | Promise<boolean>;
   initialBatchName?: string;
   initialItems?: Array<Omit<UxCreateBatchItem, "id">>;
+  /** When `open` is true, form re-syncs from initial props whenever this key changes (e.g. batch id or `"create"`). */
+  formResetKey?: string;
+  /** `edit`: group quantity is fixed to 1 for rows with `sourcePlantId`. */
+  mode?: "create" | "edit";
+  /** Prefills the diary selector when `diarySelect` is set. */
+  initialDiaryId?: string;
+  /**
+   * When the modal opens in **edit** mode, jump to the group editor for a newly appended empty row
+   * (add plants to an existing batch). Ignored in create mode.
+   */
+  focusNewGroupOnOpen?: boolean;
+  /**
+   * When the modal opens in **edit** mode, open the group editor for the row tied to this backend plant id.
+   */
+  initialEditorSourcePlantId?: string | null;
+  /** Primary action label on the table step (defaults by `mode`). */
+  submitButtonLabel?: string;
+  /** Subtitle under the modal title on the groups table step. */
+  modalSubtitleTable?: string;
+  /** Subtitle under the modal title on the single-group editor step. */
+  modalSubtitleEditor?: string;
+  /** Left hint in the footer on the table step. */
+  tableStepFooterHint?: string;
+  /** Left hint in the footer on the group editor step. */
+  groupEditorFooterHint?: string;
+  /** Returns from the group editor to the groups table (not the primary submit). */
+  groupEditorBackButtonLabel?: string;
+  /** Column titles for the groups table (defaults to English; host can pass Russian). */
+  groupTableLabels?: Partial<
+    UxPlantBatchTableColumnLabels & { colPot: string; colActions: string }
+  >;
+  /** Copy for the empty groups table placeholder + submit guard when there are zero rows. */
+  groupsTableEmptyCopy?: Partial<UxCreateBatchGroupsTableEmptyCopy>;
   onClose: () => void;
   onSubmit?: (payload: UxCreateBatchSubmitPayload) => void;
 };
 
 type TModalLevel = "table" | "editor";
 
+const PLANT_NAME_MIN_LENGTH = 2;
+
+function isValidPlantName(name: string): boolean {
+  return name.trim().length >= PLANT_NAME_MIN_LENGTH;
+}
+
+const PLANT_POT_OPTIONS: Array<{ value: PlantPotType; label: string }> = [
+  { value: "growBag", label: "Grow bag" },
+  { value: "airPot", label: "Air pot" },
+  { value: "standart", label: "Standard" },
+  { value: "plastic", label: "Plastic" },
+];
+
+function normalizePlantPotType(raw: string | undefined): PlantPotType | "" {
+  const v = (raw ?? "").trim();
+  if (v === "growBag" || v === "airPot" || v === "standart" || v === "plastic") {
+    return v;
+  }
+  return "";
+}
+
+function plantPotTypeLabel(value: PlantPotType | ""): string {
+  if (!value) {
+    return "—";
+  }
+  return PLANT_POT_OPTIONS.find(o => o.value === value)?.label ?? value;
+}
+
+function formatPotTableCell(potType: PlantPotType | "", potSize: string): string {
+  const t = plantPotTypeLabel(potType);
+  const s = potSize.trim();
+  const right = s || "—";
+  if (t === "—" && right === "—") {
+    return "—";
+  }
+  return `${t} / ${right}`;
+}
+
 const createEmptyItem = (): UxCreateBatchItem => ({
   id: crypto.randomUUID(),
   name: "",
   quantity: 1,
   itemLabel: "",
+  productId: "",
   productLabel: "",
+  productAvatarUrl: "",
+  productSubtitle: "",
   potType: "",
   potSize: "",
-  period: ""
+  period: "",
 });
+
+const DEFAULT_GROUPS_TABLE_EMPTY: UxCreateBatchGroupsTableEmptyCopy = {
+  title: "No plant groups yet",
+  description:
+    "Add a group to define products, pots, periods, and how many plants belong to this batch.",
+  addButton: "Add new",
+  submitErrorWhenEmpty: "Add at least one plant group before submitting.",
+};
 
 const mapInitialItems = (
   initialItems?: Array<Omit<UxCreateBatchItem, "id">>
 ): Array<UxCreateBatchItem> => {
   if (!initialItems || initialItems.length === 0) {
-    return [createEmptyItem()];
+    return [];
   }
 
   return initialItems.map(item => ({
@@ -74,10 +245,14 @@ const mapInitialItems = (
     name: item.name ?? "",
     quantity: Math.max(1, Number(item.quantity || 1)),
     itemLabel: item.itemLabel ?? "",
+    productId: item.productId ?? "",
     productLabel: item.productLabel ?? "",
-    potType: item.potType ?? "",
+    productAvatarUrl: item.productAvatarUrl ?? "",
+    productSubtitle: item.productSubtitle ?? "",
+    potType: normalizePlantPotType(item.potType as string),
     potSize: item.potSize ?? "",
-    period: item.period ?? ""
+    period: item.period ?? "",
+    ...(item.sourcePlantId ? { sourcePlantId: item.sourcePlantId } : {}),
   }));
 };
 
@@ -86,17 +261,173 @@ export function UxCreateBatchModal({
   title = "Create Plant Batch",
   loading = false,
   productsModal,
+  diarySelect,
+  productCardLabels,
+  renderSelectedProduct,
+  confirmRemoveGroup,
   initialBatchName = "",
   initialItems,
+  formResetKey = "default",
+  mode = "create",
+  initialDiaryId = "",
+  focusNewGroupOnOpen = false,
+  initialEditorSourcePlantId = null,
+  submitButtonLabel,
+  modalSubtitleTable,
+  modalSubtitleEditor,
+  tableStepFooterHint,
+  groupEditorFooterHint,
+  groupEditorBackButtonLabel,
+  groupTableLabels: groupTableLabelsProp,
+  groupsTableEmptyCopy: groupsTableEmptyCopyProp,
   onClose,
-  onSubmit
+  onSubmit,
 }: UxCreateBatchModalProps) {
-  const [batchName, setBatchName] = useState(initialBatchName);
-  const [items, setItems] = useState<Array<UxCreateBatchItem>>(() => mapInitialItems(initialItems));
+  const [batchName, setBatchName] = useState("");
+  const [items, setItems] = useState<Array<UxCreateBatchItem>>(() => []);
+  const [diaryValue, setDiaryValue] = useState("");
   const [error, setError] = useState<string>("");
   const [pickerItemId, setPickerItemId] = useState<string>();
   const [level, setLevel] = useState<TModalLevel>("table");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [plantNameEditorTouched, setPlantNameEditorTouched] = useState(false);
+
+  const primarySubmitLabel =
+    submitButtonLabel ?? (mode === "edit" ? "Save batch" : "Create batch");
+
+  const resolvedModalSubtitle =
+    level === "table"
+      ? (modalSubtitleTable ?? "Set batch name and configure plant groups table.")
+      : (modalSubtitleEditor ?? "Edit plant group fields (without batch name).");
+
+  const resolvedTableFooterHint =
+    tableStepFooterHint ?? "Review groups and submit batch.";
+
+  const resolvedEditorFooterHint =
+    groupEditorFooterHint ??
+    (mode === "create"
+      ? "Fill in the group, then return to the table and create the batch."
+      : "Save changes to this group and return to the batch table.");
+
+  const resolvedEditorBackLabel =
+    groupEditorBackButtonLabel ?? (mode === "create" ? "Back to groups" : "Done editing");
+
+  const gl: UxPlantBatchTableColumnLabels & { colPot: string; colActions: string } = {
+    colProduct: "Product",
+    colName: "Plant name",
+    colPeriod: "Period",
+    colQuantity: "Qty",
+    periodNotSelected: "Not selected",
+    colPot: "Pot",
+    colActions: "Actions",
+    ...groupTableLabelsProp,
+  };
+
+  const groupsTableEmpty = useMemo(
+    () => ({ ...DEFAULT_GROUPS_TABLE_EMPTY, ...groupsTableEmptyCopyProp }),
+    [groupsTableEmptyCopyProp],
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setBatchName(initialBatchName ?? "");
+    setDiaryValue(diarySelect ? (initialDiaryId ?? "") : "");
+    setError("");
+    setPlantNameEditorTouched(false);
+
+    const base = mapInitialItems(initialItems);
+
+    if (mode === "edit" && initialEditorSourcePlantId) {
+      const row = base.find(i => i.sourcePlantId === initialEditorSourcePlantId);
+      if (row) {
+        setItems(base);
+        setLevel("editor");
+        setEditingItemId(row.id);
+        return;
+      }
+    }
+
+    if (mode === "edit" && focusNewGroupOnOpen) {
+      const onlyDraft =
+        base.length === 1 &&
+        !base[0].sourcePlantId &&
+        !String(base[0].name ?? "").trim();
+      if (onlyDraft) {
+        setItems(base);
+        setLevel("editor");
+        setEditingItemId(base[0].id);
+        return;
+      }
+      const newItem = createEmptyItem();
+      setItems([...base, newItem]);
+      setLevel("editor");
+      setEditingItemId(newItem.id);
+      return;
+    }
+
+    setItems(base);
+    setLevel("table");
+    setEditingItemId(null);
+  }, [
+    open,
+    formResetKey,
+    diarySelect,
+    initialBatchName,
+    initialDiaryId,
+    initialItems,
+    mode,
+    focusNewGroupOnOpen,
+    initialEditorSourcePlantId,
+  ]);
+
+  useEffect(() => {
+    setPlantNameEditorTouched(false);
+  }, [editingItemId]);
+
+  useEffect(() => {
+    if (!open) {
+      setPickerItemId(undefined);
+    }
+  }, [open]);
+
+  /** Escape: product picker → group editor → close batch modal (Ant `keyboard` off so layers stack). */
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") {
+        return;
+      }
+
+      if (pickerItemId) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPickerItemId(undefined);
+        return;
+      }
+
+      if (level === "editor") {
+        e.preventDefault();
+        e.stopPropagation();
+        setLevel("table");
+        setEditingItemId(null);
+        return;
+      }
+
+      if (!loading) {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [open, loading, onClose, pickerItemId, level]);
 
   const totalPlants = useMemo(
     () => items.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0),
@@ -106,10 +437,6 @@ export function UxCreateBatchModal({
     () => items.find(item => item.id === editingItemId) ?? null,
     [items, editingItemId]
   );
-
-  if (!open) {
-    return null;
-  }
 
   const updateItem = (id: string, next: Partial<UxCreateBatchItem>) => {
     setItems(prev => prev.map(item => (item.id === id ? { ...item, ...next } : item)));
@@ -127,10 +454,43 @@ export function UxCreateBatchModal({
   const removeGroup = (id: string) => {
     setItems(prev => {
       if (prev.length <= 1) {
-        return [createEmptyItem()];
+        return [];
       }
       return prev.filter(item => item.id !== id);
     });
+  };
+
+  const deleteGroupRow = async (id: string) => {
+    const row = items.find(item => item.id === id);
+    if (!row) {
+      return;
+    }
+
+    const isLastGroup = items.length <= 1;
+
+    if (confirmRemoveGroup) {
+      try {
+        const ok = await confirmRemoveGroup({
+          name: row.name,
+          quantity: Math.max(1, Number(row.quantity || 1)),
+          productLabel: row.productLabel,
+          itemLabel: row.itemLabel,
+          isLastGroup,
+        });
+        if (!ok) {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
+
+    if (editingItemId === id) {
+      setEditingItemId(null);
+      setLevel("table");
+    }
+    removeGroup(id);
+    setError("");
   };
 
   const removeOne = (id: string) => {
@@ -144,287 +504,454 @@ export function UxCreateBatchModal({
 
   const handleSubmit = () => {
     const normalizedBatchName = batchName.trim();
-    const prepared = items.map(({ id, ...rest }) => ({
-      ...rest,
-      name: rest.name.trim(),
-      quantity: Math.max(1, Number(rest.quantity || 1))
-    }));
+    const prepared = items.map(({ id, ...rest }) => {
+      const q =
+        mode === "edit" && rest.sourcePlantId
+          ? 1
+          : Math.max(1, Number(rest.quantity || 1));
+      return {
+        ...rest,
+        name: rest.name.trim(),
+        quantity: q,
+      };
+    });
 
     if (normalizedBatchName.length < 2) {
       setError("Batch name is required (minimum 2 characters).");
       return;
     }
 
-    if (prepared.some(item => item.name.length < 2)) {
-      setError("Each row must contain a plant name with at least 2 characters.");
+    if (prepared.length === 0) {
+      setError(groupsTableEmpty.submitErrorWhenEmpty);
       return;
     }
 
+    if (prepared.some(item => !isValidPlantName(item.name))) {
+      setError(`Each row must contain a plant name with at least ${PLANT_NAME_MIN_LENGTH} characters.`);
+      return;
+    }
+
+    const diaryId = diarySelect && diaryValue.trim() ? diaryValue.trim() : undefined;
+
     onSubmit?.({
       batchName: normalizedBatchName,
+      ...(diaryId ? { diaryId } : {}),
       items: prepared,
     });
   };
 
   const pickerOpen = Boolean(pickerItemId);
 
+  const columns: ColumnsType<UxCreateBatchItem> = [
+    uxPlantBatchAvatarColumn<UxCreateBatchItem>({
+      getSrc: item => item.productAvatarUrl?.trim() || undefined,
+      getInitialLetter: item => item.name?.trim() || "?",
+    }),
+    uxPlantBatchProductColumn<UxCreateBatchItem>({ colProduct: gl.colProduct }),
+    uxPlantBatchNameWithLabelColumn<UxCreateBatchItem>({ colName: gl.colName }),
+    uxPlantBatchPotColumn<UxCreateBatchItem>({ colPot: gl.colPot }, item =>
+      formatPotTableCell(item.potType, item.potSize),
+    ),
+    uxPlantBatchPeriodColumn<UxCreateBatchItem>(
+      { colPeriod: gl.colPeriod, periodNotSelected: gl.periodNotSelected },
+      { tagFontSize: 10 },
+    ),
+    uxPlantBatchQuantityColumn<UxCreateBatchItem>({ colQuantity: gl.colQuantity }),
+    {
+      title: gl.colActions,
+      key: "actions",
+      width: 56,
+      render: (_, item) => (
+        <Space size={0}>
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            disabled={loading}
+            aria-label="Edit group"
+            title="Edit group"
+            onClick={() => {
+              setEditingItemId(item.id);
+              setLevel("editor");
+            }}
+          />
+          <Button
+            type="text"
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            disabled={loading}
+            aria-label="Delete group from batch"
+            title="Delete group"
+            onClick={() => {
+              void deleteGroupRow(item.id);
+            }}
+          />
+        </Space>
+      ),
+    },
+  ];
+
+  const modalFooter =
+    level === "editor" ? (
+      <Flex justify="space-between" align="center" gap={16} wrap="wrap">
+        <Typography.Text type="secondary">{resolvedEditorFooterHint}</Typography.Text>
+        <Button
+          type="primary"
+          size="small"
+          disabled={loading}
+          onClick={() => {
+            setPlantNameEditorTouched(true);
+            const current = items.find(item => item.id === editingItemId);
+            if (!current || !isValidPlantName(current.name)) {
+              return;
+            }
+            setLevel("table");
+            setEditingItemId(null);
+          }}
+        >
+          {resolvedEditorBackLabel}
+        </Button>
+      </Flex>
+    ) : (
+      <Flex justify="space-between" align="center" gap={16} wrap="wrap">
+        <Typography.Text type="secondary">{resolvedTableFooterHint}</Typography.Text>
+        <Space size="small">
+          <Button size="small" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            size="small"
+            onClick={handleSubmit}
+            disabled={loading}
+            loading={loading}
+          >
+            {primarySubmitLabel}
+          </Button>
+        </Space>
+      </Flex>
+    );
+
+  const modalFooterWithSeparator = (
+    <Flex vertical gap={0} style={{ width: "100%" }}>
+      <Divider style={{ margin: 0 }} />
+      <div style={{ paddingTop: 12 }}>{modalFooter}</div>
+    </Flex>
+  );
+
   return (
     <>
-      <div style={styles.backdrop}>
-        <div style={styles.modal} role="dialog" aria-modal="true" aria-label={title}>
-          <div style={styles.header}>
-            <div>
-              <h3 style={styles.title}>{title}</h3>
-              <p style={styles.subtitle}>
-                {level === "table"
-                  ? "Level 1: set batch name and configure plant groups table."
-                  : "Level 2: edit plant group fields (without batch name)."}
-              </p>
-            </div>
-            <button style={styles.closeButton} onClick={onClose} disabled={loading}>
-              Close
-            </button>
-          </div>
+      <Modal
+        open={open}
+        title={
+          <Flex vertical gap={4}>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              {title}
+            </Typography.Title>
+            <Typography.Text type="secondary">{resolvedModalSubtitle}</Typography.Text>
+          </Flex>
+        }
+        onCancel={onClose}
+        footer={modalFooterWithSeparator}
+        width={720}
+        centered
+        keyboard={false}
+        maskClosable={!loading}
+        destroyOnClose
+        styles={{ body: { paddingTop: 8 } }}
+      >
+        {level === "table" ? (
+          <>
+            <Flex vertical gap={4} style={{ marginBottom: 10 }}>
+              <Typography.Text style={{ fontSize: 12 }}>Batch name *</Typography.Text>
+              <Input
+                size="small"
+                value={batchName}
+                disabled={loading}
+                onChange={e => {
+                  setBatchName(e.target.value);
+                  setError("");
+                }}
+                placeholder="e.g. Spring 2026 / Seed Co #1"
+              />
+            </Flex>
 
-          {level === "table" ? (
-            <>
-              <label style={styles.batchField}>
-                <span style={styles.label}>Batch name *</span>
-                <input
-                  style={styles.input}
-                  value={batchName}
+            {diarySelect ? (
+              <Flex vertical gap={4} style={{ marginBottom: 10 }}>
+                <Typography.Text style={{ fontSize: 12 }}>{diarySelect.label}</Typography.Text>
+                <Select
+                  size="small"
+                  allowClear
+                  placeholder={diarySelect.placeholderOption}
+                  value={diaryValue || undefined}
                   disabled={loading}
-                  onChange={event => {
-                    setBatchName(event.target.value);
+                  onChange={v => {
+                    setDiaryValue(v ?? "");
                     setError("");
                   }}
-                  placeholder="e.g. Spring 2026 / Seed Co #1"
+                  options={diarySelect.options.map(o => ({ value: o.value, label: o.label }))}
+                  style={{ width: "100%" }}
                 />
-              </label>
+              </Flex>
+            ) : null}
 
-              <div style={styles.summaryBox}>
-                <span>
-                  Count: {items.length} | Total: {totalPlants}
-                </span>
-                <button style={styles.addInlineButton} disabled={loading} onClick={addRow}>
-                  <PlusIcon />
-                  Add new
-                </button>
-              </div>
+            {items.length > 0 ? (
+              <>
+                <Card size="small" styles={{ body: { padding: "6px 8px" } }} style={{ marginBottom: 8 }}>
+                  <Flex justify="space-between" align="center" gap={8} wrap="wrap">
+                    <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                      Count: {items.length} | Total: {totalPlants}
+                    </Typography.Text>
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      disabled={loading}
+                      onClick={addRow}
+                    >
+                      {groupsTableEmpty.addButton}
+                    </Button>
+                  </Flex>
+                </Card>
 
-              <div style={styles.tableWrap}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Plant name</th>
-                      <th style={styles.th}>Product</th>
-                      <th style={styles.th}>Pot type</th>
-                      <th style={styles.th}>Pot size</th>
-                      <th style={styles.th}>Period</th>
-                      <th style={styles.th}>Quantity (group)</th>
-                      <th style={styles.th}>Item label (optional)</th>
-                      <th style={styles.th}>Edit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map(item => (
-                      <tr key={item.id}>
-                        <td style={styles.td}>{item.name || "—"}</td>
-                        <td style={styles.td}>{item.productLabel || "—"}</td>
-                        <td style={styles.td}>{item.potType || "—"}</td>
-                        <td style={styles.td}>{item.potSize || "—"}</td>
-                        <td style={styles.td}>{item.period || "—"}</td>
-                        <td style={styles.td}>{item.quantity}</td>
-                        <td style={styles.td}>{item.itemLabel || "—"}</td>
-                        <td style={styles.td}>
-                          <button
-                            style={styles.iconActionButton}
-                            disabled={loading}
-                            onClick={() => {
-                              setEditingItemId(item.id);
-                              setLevel("editor");
-                            }}
-                            aria-label="Edit group"
-                            title="Edit group"
-                          >
-                            <EditIcon />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={styles.editorTopBar}>
-                <button
-                  style={styles.ghostButton}
-                  disabled={loading}
-                  onClick={() => {
-                    setLevel("table");
-                    setEditingItemId(null);
-                  }}
-                >
-                  Back to table
-                </button>
-                <span style={styles.editorCaption}>
-                  {editingItem ? `Group editor: ${editingItem.name || "new group"}` : "Group editor"}
-                </span>
-              </div>
+                <Table<UxCreateBatchItem>
+                  rowKey="id"
+                  columns={columns}
+                  dataSource={items}
+                  pagination={false}
+                  bordered
+                  size="small"
+                  tableLayout="fixed"
+                  style={{ width: "100%" }}
+                  styles={UX_PLANT_BATCH_TABLE_STYLES}
+                />
+              </>
+            ) : (
+              <UxPlantBatchGroupsTableEmpty
+                disabled={loading}
+                title={groupsTableEmpty.title}
+                description={groupsTableEmpty.description}
+                addButtonLabel={groupsTableEmpty.addButton}
+                onAdd={addRow}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <Flex justify="space-between" align="center" style={{ marginBottom: 10 }} wrap="wrap" gap={8}>
+              <Button
+                size="small"
+                disabled={loading}
+                onClick={() => {
+                  setLevel("table");
+                  setEditingItemId(null);
+                }}
+              >
+                Back to table
+              </Button>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {editingItem ? `Group editor: ${editingItem.name || "new group"}` : "Group editor"}
+              </Typography.Text>
+            </Flex>
 
-              {editingItem ? (
-                <div style={styles.rowCard}>
-                  <div style={styles.rowHeader}>
-                    <strong>Group fields</strong>
-                  </div>
-
-                  <div style={styles.formLevels}>
-                    <div style={styles.levelTwoCols}>
-                      <label style={styles.field}>
-                        <span style={styles.label}>Plant name *</span>
-                        <input
-                          style={styles.input}
-                          value={editingItem.name}
-                          disabled={loading}
-                          onChange={event => updateItem(editingItem.id, { name: event.target.value })}
-                          placeholder="e.g. OG Kush #1"
-                        />
-                      </label>
-
-                      <label style={styles.field}>
-                        <span style={styles.label}>Item label (optional)</span>
-                        <input
-                          style={styles.input}
-                          value={editingItem.itemLabel}
-                          disabled={loading}
-                          onChange={event => updateItem(editingItem.id, { itemLabel: event.target.value })}
-                          placeholder="e.g. Mothers / Test #1"
-                        />
-                      </label>
-                    </div>
-
-                    <div style={styles.levelOneCol}>
-                      <div style={styles.field}>
-                        <span style={styles.label}>Product</span>
-                        <div style={styles.productPickerWrap}>
-                          <span style={styles.productValue}>
-                            {editingItem.productLabel.trim() ? editingItem.productLabel : "Not selected"}
-                          </span>
-                          <button
-                            style={styles.secondaryButton}
-                            type="button"
-                            disabled={loading}
-                            onClick={() => setPickerItemId(editingItem.id)}
-                          >
-                            Choose product
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={styles.levelTwoCols}>
-                      <label style={styles.field}>
-                        <span style={styles.label}>Pot type</span>
-                        <input
-                          style={styles.input}
-                          value={editingItem.potType}
-                          disabled={loading}
-                          onChange={event => updateItem(editingItem.id, { potType: event.target.value })}
-                          placeholder="Optional"
-                        />
-                      </label>
-
-                      <label style={styles.field}>
-                        <span style={styles.label}>Pot size (L)</span>
-                        <input
-                          style={styles.input}
-                          value={editingItem.potSize}
-                          disabled={loading}
-                          onChange={event => updateItem(editingItem.id, { potSize: event.target.value })}
-                          placeholder="Optional"
-                        />
-                      </label>
-                    </div>
-
-                    <div style={styles.levelOneCol}>
-                      <label style={styles.field}>
-                        <span style={styles.label}>Period</span>
-                        <div style={styles.periodFieldWrap}>
-                          <UxPeriodField
-                          value={editingItem.period}
-                          disabled={loading}
-                          onChange={value =>
-                            updateItem(editingItem.id, {
-                              period: value
-                            })
-                          }
-                          />
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div style={styles.quantitySection}>
-                    <div style={styles.quantityRow}>
-                      <label style={styles.quantityField}>
-                        <span style={styles.label}>Quantity (group)</span>
-                        <input
-                          style={styles.input}
-                          type="number"
-                          min={1}
-                          max={200}
-                          value={editingItem.quantity}
-                          disabled
-                        />
-                      </label>
-                      <button
-                        style={styles.ghostDangerButton}
-                        disabled={editingItem.quantity <= 1 || loading}
-                        onClick={() => removeOne(editingItem.id)}
+            {editingItem ? (
+              <Card size="small" title="Group fields">
+                <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                  <Row gutter={[12, 8]}>
+                    <Col xs={24}>
+                      <Form
+                        layout="vertical"
+                        size="small"
+                        style={{ width: "100%", marginBottom: 0 }}
                       >
-                        Reduce quantity
-                      </button>
+                        <Form.Item
+                          label="Plant name"
+                          required
+                          validateStatus={
+                            plantNameEditorTouched && !isValidPlantName(editingItem.name)
+                              ? "error"
+                              : undefined
+                          }
+                          help={
+                            plantNameEditorTouched && !isValidPlantName(editingItem.name)
+                              ? `Enter at least ${PLANT_NAME_MIN_LENGTH} characters (not only spaces).`
+                              : undefined
+                          }
+                        >
+                          <Input
+                            size="small"
+                            value={editingItem.name}
+                            disabled={loading}
+                            onChange={e => updateItem(editingItem.id, { name: e.target.value })}
+                            onBlur={() => setPlantNameEditorTouched(true)}
+                            placeholder="e.g. OG Kush #1"
+                          />
+                        </Form.Item>
+                        <Form.Item label="Item label (optional)" style={{ marginBottom: 0 }}>
+                          <Input
+                            size="small"
+                            value={editingItem.itemLabel}
+                            disabled={loading}
+                            onChange={e => updateItem(editingItem.id, { itemLabel: e.target.value })}
+                            placeholder="e.g. Mothers / Test #1"
+                          />
+                        </Form.Item>
+                      </Form>
+                    </Col>
+                  </Row>
+
+                  <Flex vertical gap={4}>
+                    <Typography.Text style={{ fontSize: 12 }}>Product</Typography.Text>
+                    {editingItem.productLabel.trim() &&
+                    renderSelectedProduct &&
+                    editingItem.productId.trim() ? (
+                      renderSelectedProduct({
+                        productId: editingItem.productId,
+                        name: editingItem.productLabel,
+                        subtitle: editingItem.productSubtitle || undefined,
+                        avatarUrl: editingItem.productAvatarUrl || undefined,
+                        loading,
+                        compact: true,
+                        onOpenPicker: () => setPickerItemId(editingItem.id),
+                        onClear: () =>
+                          updateItem(editingItem.id, {
+                            productId: "",
+                            productLabel: "",
+                            productAvatarUrl: "",
+                            productSubtitle: "",
+                          }),
+                      })
+                    ) : (
+                      <UxSelectedProductCard
+                        size="compact"
+                        name={editingItem.productLabel}
+                        subtitle={editingItem.productSubtitle}
+                        avatarUrl={editingItem.productAvatarUrl || undefined}
+                        disabled={loading}
+                        labels={productCardLabels}
+                        onChoose={() => setPickerItemId(editingItem.id)}
+                        onClear={() =>
+                          updateItem(editingItem.id, {
+                            productId: "",
+                            productLabel: "",
+                            productAvatarUrl: "",
+                            productSubtitle: "",
+                          })
+                        }
+                      />
+                    )}
+                  </Flex>
+
+                  <Flex vertical gap={4}>
+                    <Typography.Text style={{ fontSize: 12 }}>Pot</Typography.Text>
+                    <Flex gap={8} wrap="wrap">
+                      <Select
+                        size="small"
+                        placeholder="Not set"
+                        allowClear
+                        style={{ flex: "1 1 160px", minWidth: 120 }}
+                        value={editingItem.potType || undefined}
+                        disabled={loading}
+                        onChange={v =>
+                          updateItem(editingItem.id, {
+                            potType: normalizePlantPotType(v),
+                          })
+                        }
+                        options={PLANT_POT_OPTIONS}
+                      />
+                      <Input
+                        size="small"
+                        style={{ flex: "0 1 100px", maxWidth: 120 }}
+                        value={editingItem.potSize}
+                        disabled={loading}
+                        onChange={e => updateItem(editingItem.id, { potSize: e.target.value })}
+                        placeholder="Size (L)"
+                        inputMode="decimal"
+                      />
+                    </Flex>
+                  </Flex>
+
+                  <Flex vertical gap={4}>
+                    <Typography.Text style={{ fontSize: 12 }}>Period</Typography.Text>
+                    <div
+                      style={{
+                        border: "1px solid #d9d9d9",
+                        borderRadius: 6,
+                        padding: "6px 8px",
+                        background: "#fff",
+                      }}
+                    >
+                      <UxPeriodField
+                        size="small"
+                        value={editingItem.period}
+                        disabled={loading}
+                        onChange={value =>
+                          updateItem(editingItem.id, {
+                            period: value,
+                          })
+                        }
+                      />
                     </div>
-                  </div>
-                </div>
-              ) : null}
-            </>
-          )}
+                  </Flex>
 
-          {error ? <div style={styles.error}>{error}</div> : null}
+                  <Divider style={{ margin: "6px 0" }} />
 
-          <div style={styles.footer}>
-            <span style={styles.footerHint}>
-              {level === "table"
-                ? "Review groups and submit batch."
-                : "Edit groups, then return to table to submit batch."}
-            </span>
-            <div style={styles.actionsRight}>
-              {level === "editor" ? (
-                <button
-                  style={styles.ghostButton}
-                  onClick={() => {
-                    setLevel("table");
-                    setEditingItemId(null);
-                  }}
-                  disabled={loading}
-                >
-                  Done editing
-                </button>
-              ) : (
-                <button style={styles.ghostButton} onClick={onClose} disabled={loading}>
-                  Cancel
-                </button>
-              )}
-              <button style={styles.primaryButton} onClick={handleSubmit} disabled={loading}>
-                {loading ? "Creating..." : "Create batch"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+                  <Flex align="flex-end" gap={8} wrap="wrap">
+                    <Flex vertical gap={4} style={{ maxWidth: 200, flex: "1 1 140px" }}>
+                      <Typography.Text style={{ fontSize: 12 }}>Quantity (group)</Typography.Text>
+                      <InputNumber
+                        size="small"
+                        min={1}
+                        max={200}
+                        step={1}
+                        precision={0}
+                        value={editingItem.quantity}
+                        disabled={
+                          loading || (mode === "edit" && Boolean(editingItem.sourcePlantId))
+                        }
+                        onChange={v => {
+                          if (v == null || Number.isNaN(Number(v))) {
+                            updateItem(editingItem.id, { quantity: 1 });
+                            return;
+                          }
+                          const n = Math.min(200, Math.max(1, Math.trunc(Number(v))));
+                          updateItem(editingItem.id, { quantity: n });
+                        }}
+                        style={{ width: "100%" }}
+                      />
+                    </Flex>
+                    <Button
+                      size="small"
+                      danger
+                      disabled={
+                        editingItem.quantity <= 1 ||
+                        loading ||
+                        (mode === "edit" && Boolean(editingItem.sourcePlantId))
+                      }
+                      onClick={() => removeOne(editingItem.id)}
+                    >
+                      Reduce quantity
+                    </Button>
+                  </Flex>
+                </Space>
+              </Card>
+            ) : null}
+          </>
+        )}
+
+        {error ? (
+          <Alert
+            style={{ marginTop: 12 }}
+            type="error"
+            showIcon
+            closable
+            message={error}
+            onClose={() => setError("")}
+          />
+        ) : null}
+      </Modal>
+
       {pickerOpen ? (
         <UxProductsModalPresentation
           open={pickerOpen}
@@ -443,7 +970,12 @@ export function UxCreateBatchModal({
           onSelectProduct={productId => {
             const selected = (productsModal?.products ?? []).find(product => product.id === productId);
             if (selected && pickerItemId) {
-              updateItem(pickerItemId, { productLabel: selected.name });
+              updateItem(pickerItemId, {
+                productId: selected.id,
+                productLabel: selected.name,
+                productAvatarUrl: selected.avatarUrl ?? "",
+                productSubtitle: selected.subtitle ?? "",
+              });
             }
             setPickerItemId(undefined);
           }}
@@ -452,286 +984,3 @@ export function UxCreateBatchModal({
     </>
   );
 }
-
-const styles: Record<string, CSSProperties> = {
-  backdrop: {
-    position: "fixed",
-    inset: 0,
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "rgba(12, 16, 22, 0.55)",
-    zIndex: 1000,
-    padding: 20
-  },
-  modal: {
-    width: "min(980px, 100%)",
-    maxHeight: "92vh",
-    overflow: "auto",
-    fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
-    borderRadius: 14,
-    border: "1px solid #dce3f4",
-    background: "#ffffff",
-    boxShadow: "0 24px 90px rgba(14, 34, 71, 0.2)",
-    padding: 20
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 12,
-    alignItems: "flex-start",
-    marginBottom: 12
-  },
-  title: {
-    margin: 0,
-    fontSize: 20
-  },
-  subtitle: {
-    margin: "6px 0 0",
-    color: "#5f6f90",
-    fontSize: 14
-  },
-  closeButton: {
-    borderRadius: 8,
-    border: "1px solid #d6def1",
-    background: "#fff",
-    padding: "8px 12px",
-    cursor: "pointer"
-  },
-  batchField: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    marginBottom: 12
-  },
-  summaryBox: {
-    border: "1px dashed #c9d5f3",
-    borderRadius: 10,
-    padding: "10px 12px",
-    background: "#f7faff",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    fontSize: 13.5,
-    color: "#34508e"
-  },
-  tableWrap: {
-    border: "1px solid #e2e8f8",
-    borderRadius: 10,
-    overflow: "auto",
-    marginBottom: 6
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    minWidth: 860
-  },
-  th: {
-    textAlign: "left",
-    fontSize: 12,
-    color: "#50607e",
-    background: "#f6f9ff",
-    borderBottom: "1px solid #e2e8f8",
-    padding: "10px 10px"
-  },
-  td: {
-    fontSize: 13,
-    color: "#223457",
-    borderBottom: "1px solid #eff3fc",
-    padding: "10px 10px",
-    verticalAlign: "middle"
-  },
-  iconActionButton: {
-    border: "1px solid #d4deef",
-    background: "#fff",
-    borderRadius: 8,
-    width: 30,
-    height: 30,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    color: "#3f527c"
-  },
-  addInlineButton: {
-    border: "1px solid #b9caf1",
-    background: "#eef3ff",
-    color: "#204295",
-    borderRadius: 8,
-    padding: "6px 10px",
-    cursor: "pointer",
-    fontWeight: 600,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6
-  },
-  editorTopBar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8
-  },
-  editorCaption: {
-    fontSize: 12.5,
-    color: "#50607e"
-  },
-  rowsContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10
-  },
-  rowCard: {
-    border: "1px solid #e2e8f8",
-    borderRadius: 12,
-    padding: 12
-  },
-  rowHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    alignItems: "center"
-  },
-  rowActions: {
-    display: "flex",
-    gap: 8
-  },
-  formLevels: {
-    display: "grid",
-    gap: 12
-  },
-  levelTwoCols: {
-    display: "grid",
-    gap: 10,
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))"
-  },
-  levelOneCol: {
-    display: "grid",
-    gap: 10,
-    gridTemplateColumns: "minmax(0, 1fr)"
-  },
-  quantitySection: {
-    marginTop: 12,
-    paddingTop: 10,
-    borderTop: "1px dashed #dce4f6"
-  },
-  quantityField: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    maxWidth: 220
-  },
-  quantityRow: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: 8
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6
-  },
-  productPickerWrap: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 8
-  },
-  productValue: {
-    minHeight: 20,
-    fontSize: 13,
-    color: "#4d5f83"
-  },
-  label: {
-    fontSize: 12,
-    color: "#50607e"
-  },
-  input: {
-    border: "1px solid #d4deef",
-    borderRadius: 8,
-    padding: "8px 10px",
-    fontSize: 14
-  },
-  periodFieldWrap: {
-    border: "1px solid #d4deef",
-    borderRadius: 8,
-    padding: 8,
-    background: "#fff"
-  },
-  error: {
-    marginTop: 12,
-    padding: "10px 12px",
-    borderRadius: 8,
-    border: "1px solid #ffc9c9",
-    background: "#fff3f3",
-    color: "#9c2f2f"
-  },
-  footer: {
-    marginTop: 14,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10
-  },
-  actionsRight: {
-    display: "flex",
-    gap: 8
-  },
-  footerHint: {
-    fontSize: 12.5,
-    color: "#596b93"
-  },
-  primaryButton: {
-    border: "1px solid #1f54dd",
-    background: "#2264ff",
-    color: "#fff",
-    borderRadius: 9,
-    padding: "9px 14px",
-    cursor: "pointer",
-    fontWeight: 600
-  },
-  secondaryButton: {
-    border: "1px solid #b9caf1",
-    background: "#eef3ff",
-    color: "#204295",
-    borderRadius: 9,
-    padding: "9px 14px",
-    cursor: "pointer",
-    fontWeight: 600
-  },
-  ghostButton: {
-    border: "1px solid #d4deef",
-    background: "#fff",
-    color: "#30496f",
-    borderRadius: 9,
-    padding: "8px 12px",
-    cursor: "pointer"
-  },
-  ghostDangerButton: {
-    border: "1px solid #f0c2c2",
-    background: "#fff7f7",
-    color: "#9f2f2f",
-    borderRadius: 9,
-    padding: "8px 12px",
-    cursor: "pointer"
-  }
-};
-
-const PlusIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path d="M10 4V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M4 10H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path
-      d="M4 14.8V16H5.2L14.9 6.3L13.7 5.1L4 14.8Z"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinejoin="round"
-    />
-    <path d="M12.9 5.9L14.1 7.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);

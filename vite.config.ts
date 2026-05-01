@@ -12,11 +12,13 @@ export default defineConfig({
       formats: ["es", "umd"]
     },
     rollupOptions: {
-      external: ["react", "react-dom"],
+      external: ["react", "react-dom", "antd", "@ant-design/icons"],
       output: {
         globals: {
           react: "React",
-          "react-dom": "ReactDOM"
+          "react-dom": "ReactDOM",
+          antd: "antd",
+          "@ant-design/icons": "antdIcons"
         }
       }
     }

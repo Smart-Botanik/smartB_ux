@@ -18,6 +18,27 @@ const meta: Meta<typeof UxCreateBatchModal> = {
 export default meta;
 type Story = StoryObj<typeof UxCreateBatchModal>;
 
+export const EmptyGroupsPlaceholder: Story = {
+  render: args => {
+    const [open, setOpen] = useState(true);
+    return (
+      <div style={{ minHeight: 520, padding: 20, background: "#eff4ff" }}>
+        <button type="button" onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>
+          Open modal (no groups)
+        </button>
+        <UxCreateBatchModal
+          {...args}
+          open={open}
+          title="New batch"
+          initialBatchName=""
+          onClose={() => setOpen(false)}
+          onSubmit={() => undefined}
+        />
+      </div>
+    );
+  }
+};
+
 export const Playground: Story = {
   render: args => {
     const [open, setOpen] = useState(true);
@@ -54,8 +75,11 @@ export const Playground: Story = {
               name: "Blue Dream #1",
               quantity: 1,
               itemLabel: "",
+              productId: "",
               productLabel: "Blue Dream Seed",
-              potType: "Grow bag",
+              productAvatarUrl: "",
+              productSubtitle: "Seed",
+              potType: "growBag",
               potSize: "11",
               period: "vegetation"
             },
@@ -63,17 +87,23 @@ export const Playground: Story = {
               name: "White Widow #1",
               quantity: 1,
               itemLabel: "",
+              productId: "",
               productLabel: "White Widow Seed",
-              potType: "Plastic",
+              productAvatarUrl: "",
+              productSubtitle: "Seed",
+              potType: "plastic",
               potSize: "7",
               period: "vegetation"
             },
             {
               name: "OG Kush Group",
               quantity: 3,
-              itemLabel: "Group A",
+              itemLabel: "Dream Collection A",
+              productId: "",
               productLabel: "Blue Dream Seed",
-              potType: "Air pot",
+              productAvatarUrl: "",
+              productSubtitle: "Seed",
+              potType: "airPot",
               potSize: "10",
               period: "bloom"
             }
