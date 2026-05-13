@@ -11,8 +11,8 @@ import {
   uxPlantBatchPeriodColumn,
   uxPlantBatchProductColumn,
   uxPlantBatchQuantityColumn,
-} from "./UxPlantBatchTableColumns";
-import { UX_PLANT_BATCH_TABLE_STYLES } from "./UxPlantBatchTableStyles";
+} from "../UxCreateBatchModal/UxPlantBatchTableColumns";
+import { UX_PLANT_BATCH_TABLE_STYLES } from "../UxCreateBatchModal/UxPlantBatchTableStyles";
 
 export type UxPlantBatchReadPlantRow = {
   id: string;

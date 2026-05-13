@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 
-import type { UxBrandOption } from "./UxProductsModalPresentation";
+import type { UxBrandOption } from "../UxProductsModalPresentation";
 
 export type UxBrandsModalPresentationProps = {
   open: boolean;

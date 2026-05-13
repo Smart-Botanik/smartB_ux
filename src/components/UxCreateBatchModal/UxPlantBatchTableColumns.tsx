@@ -8,7 +8,7 @@ import {
   UX_TABLE_PERIOD_EMPTY_TAG_SX,
   UX_TABLE_PERIOD_FALLBACK_TAG_SX,
   UX_TABLE_PERIOD_PHASE_TAG_SX,
-} from "./UxPeriodField";
+} from "../UxPeriodField";
 
 /** Column titles + period empty label for shared batch plant tables. */
 export type UxPlantBatchTableColumnLabels = {

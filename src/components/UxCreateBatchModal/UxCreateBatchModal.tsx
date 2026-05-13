@@ -24,9 +24,9 @@ import {
   UxProductsModalPresentation,
   type UxBrandOption,
   type UxProductOption,
-} from "./UxProductsModalPresentation";
-import { UxPeriodField } from "./UxPeriodField";
-import { UxSelectedProductCard, type UxSelectedProductCardProps } from "./UxSelectedProductCard";
+} from "../UxProductsModalPresentation";
+import { UxPeriodField } from "../UxPeriodField";
+import { UxSelectedProductCard, type UxSelectedProductCardProps } from "../UxSelectedProductCard";
 import type { UxPlantBatchTableColumnLabels } from "./UxPlantBatchTableColumns";
 import {
   uxPlantBatchAvatarColumn,
@@ -36,7 +36,7 @@ import {
   uxPlantBatchProductColumn,
   uxPlantBatchQuantityColumn,
 } from "./UxPlantBatchTableColumns";
-import { UxPlantBatchGroupsTableEmpty } from "./UxPlantBatchGroupsTableEmpty";
+import { UxPlantBatchGroupsTableEmpty } from "../UxPlantBatchGroupsTableEmpty";
 import { UX_PLANT_BATCH_TABLE_STYLES } from "./UxPlantBatchTableStyles";
 
 export type UxCreateBatchItem = {
