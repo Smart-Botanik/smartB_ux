@@ -167,6 +167,10 @@ export type UxCreateBatchModalProps = {
   >;
   /** Copy for the empty groups table placeholder + submit guard when there are zero rows. */
   groupsTableEmptyCopy?: Partial<UxCreateBatchGroupsTableEmptyCopy>;
+  /** Hide quantity column and editor controls; each table row creates exactly one plant. */
+  hideQuantity?: boolean;
+  /** Label for the group/batch name field on the table step (default: "Batch name *"). */
+  batchNameFieldLabel?: string;
   onClose: () => void;
   onSubmit?: (payload: UxCreateBatchSubmitPayload) => void;
 };
@@ -280,6 +284,8 @@ export function UxCreateBatchModal({
   groupEditorBackButtonLabel,
   groupTableLabels: groupTableLabelsProp,
   groupsTableEmptyCopy: groupsTableEmptyCopyProp,
+  hideQuantity = false,
+  batchNameFieldLabel = "Batch name *",
   onClose,
   onSubmit,
 }: UxCreateBatchModalProps) {
@@ -430,8 +436,11 @@ export function UxCreateBatchModal({
   }, [open, loading, onClose, pickerItemId, level]);
 
   const totalPlants = useMemo(
-    () => items.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0),
-    [items]
+    () =>
+      hideQuantity
+        ? items.length
+        : items.reduce((acc, item) => acc + Math.max(1, Number(item.quantity || 1)), 0),
+    [hideQuantity, items],
   );
   const editingItem = useMemo(
     () => items.find(item => item.id === editingItemId) ?? null,
@@ -505,8 +514,9 @@ export function UxCreateBatchModal({
   const handleSubmit = () => {
     const normalizedBatchName = batchName.trim();
     const prepared = items.map(({ id, ...rest }) => {
-      const q =
-        mode === "edit" && rest.sourcePlantId
+      const q = hideQuantity
+        ? 1
+        : mode === "edit" && rest.sourcePlantId
           ? 1
           : Math.max(1, Number(rest.quantity || 1));
       return {
@@ -556,7 +566,9 @@ export function UxCreateBatchModal({
       { colPeriod: gl.colPeriod, periodNotSelected: gl.periodNotSelected },
       { tagFontSize: 10 },
     ),
-    uxPlantBatchQuantityColumn<UxCreateBatchItem>({ colQuantity: gl.colQuantity }),
+    ...(hideQuantity
+      ? []
+      : [uxPlantBatchQuantityColumn<UxCreateBatchItem>({ colQuantity: gl.colQuantity })]),
     {
       title: gl.colActions,
       key: "actions",
@@ -664,7 +676,7 @@ export function UxCreateBatchModal({
         {level === "table" ? (
           <>
             <Flex vertical gap={4} style={{ marginBottom: 10 }}>
-              <Typography.Text style={{ fontSize: 12 }}>Batch name *</Typography.Text>
+              <Typography.Text style={{ fontSize: 12 }}>{batchNameFieldLabel}</Typography.Text>
               <Input
                 size="small"
                 value={batchName}
@@ -897,43 +909,45 @@ export function UxCreateBatchModal({
 
                   <Divider style={{ margin: "6px 0" }} />
 
-                  <Flex align="flex-end" gap={8} wrap="wrap">
-                    <Flex vertical gap={4} style={{ maxWidth: 200, flex: "1 1 140px" }}>
-                      <Typography.Text style={{ fontSize: 12 }}>Quantity (group)</Typography.Text>
-                      <InputNumber
-                        size="small"
-                        min={1}
-                        max={200}
-                        step={1}
-                        precision={0}
-                        value={editingItem.quantity}
-                        disabled={
-                          loading || (mode === "edit" && Boolean(editingItem.sourcePlantId))
-                        }
-                        onChange={v => {
-                          if (v == null || Number.isNaN(Number(v))) {
-                            updateItem(editingItem.id, { quantity: 1 });
-                            return;
+                  {!hideQuantity ? (
+                    <Flex align="flex-end" gap={8} wrap="wrap">
+                      <Flex vertical gap={4} style={{ maxWidth: 200, flex: "1 1 140px" }}>
+                        <Typography.Text style={{ fontSize: 12 }}>Quantity (group)</Typography.Text>
+                        <InputNumber
+                          size="small"
+                          min={1}
+                          max={200}
+                          step={1}
+                          precision={0}
+                          value={editingItem.quantity}
+                          disabled={
+                            loading || (mode === "edit" && Boolean(editingItem.sourcePlantId))
                           }
-                          const n = Math.min(200, Math.max(1, Math.trunc(Number(v))));
-                          updateItem(editingItem.id, { quantity: n });
-                        }}
-                        style={{ width: "100%" }}
-                      />
+                          onChange={v => {
+                            if (v == null || Number.isNaN(Number(v))) {
+                              updateItem(editingItem.id, { quantity: 1 });
+                              return;
+                            }
+                            const n = Math.min(200, Math.max(1, Math.trunc(Number(v))));
+                            updateItem(editingItem.id, { quantity: n });
+                          }}
+                          style={{ width: "100%" }}
+                        />
+                      </Flex>
+                      <Button
+                        size="small"
+                        danger
+                        disabled={
+                          editingItem.quantity <= 1 ||
+                          loading ||
+                          (mode === "edit" && Boolean(editingItem.sourcePlantId))
+                        }
+                        onClick={() => removeOne(editingItem.id)}
+                      >
+                        Reduce quantity
+                      </Button>
                     </Flex>
-                    <Button
-                      size="small"
-                      danger
-                      disabled={
-                        editingItem.quantity <= 1 ||
-                        loading ||
-                        (mode === "edit" && Boolean(editingItem.sourcePlantId))
-                      }
-                      onClick={() => removeOne(editingItem.id)}
-                    >
-                      Reduce quantity
-                    </Button>
-                  </Flex>
+                  ) : null}
                 </Space>
               </Card>
             ) : null}

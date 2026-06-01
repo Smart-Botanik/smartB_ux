@@ -1,3 +1,10 @@
+export { UxRegistryFieldValueInput } from "./UxRegistryFieldValueInput";
+export type { UxRegistryFieldValueInputProps } from "./UxRegistryFieldValueInput";
+export { UxRegistryProfileValuesForm } from "./UxRegistryProfileValuesForm";
+export type {
+  UxRegistryProfileFieldRow,
+  UxRegistryProfileValuesFormProps,
+} from "./UxRegistryProfileValuesForm";
 export { UxBrandsModalPresentation } from "./UxBrandsModalPresentation";
 export type { UxBrandsModalPresentationProps } from "./UxBrandsModalPresentation";
 export { UxButton } from "./UxButton";
@@ -54,3 +61,16 @@ export type {
 } from "./UxProductsModalPresentation";
 export { UxSelectedProductCard } from "./UxSelectedProductCard";
 export type { UxSelectedProductCardProps } from "./UxSelectedProductCard";
+export {
+  UxWateringEventModal,
+  UxWateringFormPresentation,
+} from "./UxWateringForm";
+export type {
+  UxWateringEventModalProps,
+  UxWateringFormLabels,
+  UxWateringFormPresentationProps,
+  UxWateringFormValue,
+  UxWateringNutrientProductRenderArgs,
+  UxWateringNutrientRow,
+  UxWateringSolutionValue,
+} from "./UxWateringForm";
