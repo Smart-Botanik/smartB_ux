@@ -1,5 +1,18 @@
 export { UxRegistryFieldValueInput } from "./UxRegistryFieldValueInput";
 export type { UxRegistryFieldValueInputProps } from "./UxRegistryFieldValueInput";
+export {
+  UxSemanticFieldController,
+  UxPhField,
+  UxConcentrationField,
+  UxTemperatureField,
+  UxLengthField,
+  UxGenericNumericField,
+  RegistryNumericFieldBase,
+} from "./UxSemanticFieldController";
+export type {
+  UxSemanticFieldControllerProps,
+  UxSemanticNumericFieldProps,
+} from "./UxSemanticFieldController";
 export { UxRegistryProfileValuesForm } from "./UxRegistryProfileValuesForm";
 export type {
   UxRegistryProfileFieldRow,
@@ -33,13 +46,15 @@ export type {
 } from "./UxCreateBatchModal";
 export {
   UxPeriodField,
+  UxPeriodSelect,
   UX_PERIOD_PHASE_OPTIONS,
   UX_TABLE_ITEM_LABEL_TAG_SX,
   UX_TABLE_PERIOD_EMPTY_TAG_SX,
   UX_TABLE_PERIOD_FALLBACK_TAG_SX,
   UX_TABLE_PERIOD_PHASE_TAG_SX,
+  plantPeriodPhaseLabel,
 } from "./UxPeriodField";
-export type { UxPeriodFieldProps, UxPeriodValue } from "./UxPeriodField";
+export type { UxPeriodFieldProps, UxPeriodSelectProps, UxPeriodValue } from "./UxPeriodField";
 export {
   UxPlantBatchGroupsEmptyIllustration,
   UxPlantBatchGroupsTableEmpty,

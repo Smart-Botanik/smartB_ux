@@ -1,10 +1,13 @@
 import { useMemo, type CSSProperties } from "react";
 import { ShoppingOutlined, SwapOutlined } from "@ant-design/icons";
+import { Tag } from "antd";
 
 export type UxSelectedProductCardProps = {
   /** Product display name (from catalog). */
   name: string;
   subtitle?: string;
+  /** ContentTag labels (crop / variant chips). */
+  contentLabels?: string[];
   avatarUrl?: string;
   disabled?: boolean;
   /** Dense layout for forms (smaller type, avatars, CTAs). */
@@ -34,6 +37,7 @@ const defaultLabels = {
 export function UxSelectedProductCard({
   name,
   subtitle,
+  contentLabels,
   avatarUrl,
   disabled = false,
   size = "default",
@@ -45,6 +49,10 @@ export function UxSelectedProductCard({
   const trimmed = name.trim();
   const hasProduct = Boolean(trimmed);
   const c = size === "compact";
+  const labelChips = useMemo(
+    () => (contentLabels ?? []).map(item => item.trim()).filter(Boolean),
+    [contentLabels],
+  );
 
   const emptyCardSx = { ...styles.emptyCard, ...(c ? styles.emptyCardCompact : {}) };
   const emptyIconWrapSx = { ...styles.emptyIconWrap, ...(c ? styles.emptyIconWrapCompact : {}) };
@@ -121,6 +129,15 @@ export function UxSelectedProductCard({
               ) : null}
             </div>
             {subtitle?.trim() ? <span style={subtitleSx}>{subtitle.trim()}</span> : null}
+            {labelChips.length > 0 ? (
+              <div style={styles.labelsRow}>
+                {labelChips.map(label => (
+                  <Tag key={label} style={styles.labelTag}>
+                    {label}
+                  </Tag>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         <div style={actionsRowSx}>
@@ -314,6 +331,22 @@ const styles: Record<string, CSSProperties> = {
   },
   subtitleCompact: {
     fontSize: 11.5
+  },
+  labelsRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 4,
+    marginTop: 2
+  },
+  labelTag: {
+    margin: 0,
+    borderRadius: 6,
+    fontSize: 11,
+    lineHeight: "18px",
+    padding: "0 6px",
+    border: "1px solid #d4e0f8",
+    background: "#f3f7ff",
+    color: "#2a4578"
   },
   iconGhost: {
     flexShrink: 0,

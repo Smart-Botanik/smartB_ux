@@ -45,10 +45,17 @@ export type UxWateringNutrientProductRenderArgs = {
   onClear: () => void;
 };
 
+export type UxWateringFormVisibleSections = {
+  solution?: boolean;
+  drainage?: boolean;
+  nutrients?: boolean;
+};
+
 export type UxWateringFormPresentationProps = {
   value: UxWateringFormValue;
   onChange: (value: UxWateringFormValue) => void;
   disabled?: boolean;
+  visibleSections?: UxWateringFormVisibleSections;
   labels?: Partial<UxWateringFormLabels>;
   /** Suffix for TDS inputs, e.g. "ppm". */
   tdsUnitLabel?: string;

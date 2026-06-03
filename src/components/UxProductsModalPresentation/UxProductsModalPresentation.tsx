@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from "react";
+import { createPortal } from "react-dom";
+
+/** Above antd Modal stack (default 1000) so nested pickers receive dismiss clicks. */
+const PRODUCTS_MODAL_Z_INDEX = 2000;
 
 export type UxBrandOption = {
   id: string;
@@ -90,15 +94,36 @@ export function UxProductsModalPresentation({
     onSelectBrand?.(brandId);
   };
 
-  return (
-    <div style={styles.backdrop}>
-      <div style={styles.modal}>
+  const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleCloseClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onClose();
+  };
+
+  const modalTree = (
+    <div
+      style={{ ...styles.backdrop, zIndex: PRODUCTS_MODAL_Z_INDEX }}
+      onMouseDown={handleBackdropMouseDown}
+    >
+      <div style={styles.modal} onMouseDown={event => event.stopPropagation()}>
         <div style={styles.header}>
           <div style={styles.titleWrap}>
             <h3 style={styles.title}>{title}</h3>
             <p style={styles.subtitle}>Breeders and Products list: pick a brand, then select product.</p>
           </div>
-          <button type="button" onClick={onClose} style={styles.iconButton} aria-label="Close modal" title="Close">
+          <button
+            type="button"
+            onClick={handleCloseClick}
+            style={styles.iconButton}
+            aria-label="Close modal"
+            title="Close"
+          >
             <CloseIcon />
           </button>
         </div>
@@ -201,6 +226,12 @@ export function UxProductsModalPresentation({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") {
+    return modalTree;
+  }
+
+  return createPortal(modalTree, document.body);
 }
 
 const styles: Record<string, CSSProperties> = {
@@ -211,7 +242,6 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1100,
     padding: 20
   },
   modal: {

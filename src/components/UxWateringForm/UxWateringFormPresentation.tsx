@@ -116,8 +116,14 @@ export function UxWateringFormPresentation({
   productCardLabels,
   productsModal,
   renderNutrientProduct,
+  visibleSections,
 }: UxWateringFormPresentationProps) {
   const labels = useMemo(() => ({ ...DEFAULT_LABELS, ...labelsProp }), [labelsProp]);
+  const sections = {
+    solution: visibleSections?.solution ?? true,
+    drainage: visibleSections?.drainage ?? true,
+    nutrients: visibleSections?.nutrients ?? true,
+  };
   const [pickerRowId, setPickerRowId] = useState<string>();
 
   useEffect(() => {
@@ -245,24 +251,29 @@ export function UxWateringFormPresentation({
   return (
     <>
       <Space direction="vertical" size={16} style={{ width: "100%" }}>
-        <SolutionFields
-          title={labels.solutionTitle}
-          value={value.solution}
-          disabled={disabled}
-          labels={labels}
-          tdsUnitLabel={tdsUnitLabel}
-          volumeUnitLabel={volumeUnitLabel}
-          onChange={next => updateSolution("solution", next)}
-        />
-        <SolutionFields
-          title={labels.drainageTitle}
-          value={value.drainage}
-          disabled={disabled}
-          labels={labels}
-          tdsUnitLabel={tdsUnitLabel}
-          volumeUnitLabel={volumeUnitLabel}
-          onChange={next => updateSolution("drainage", next)}
-        />
+        {sections.solution ? (
+          <SolutionFields
+            title={labels.solutionTitle}
+            value={value.solution}
+            disabled={disabled}
+            labels={labels}
+            tdsUnitLabel={tdsUnitLabel}
+            volumeUnitLabel={volumeUnitLabel}
+            onChange={next => updateSolution("solution", next)}
+          />
+        ) : null}
+        {sections.drainage ? (
+          <SolutionFields
+            title={labels.drainageTitle}
+            value={value.drainage}
+            disabled={disabled}
+            labels={labels}
+            tdsUnitLabel={tdsUnitLabel}
+            volumeUnitLabel={volumeUnitLabel}
+            onChange={next => updateSolution("drainage", next)}
+          />
+        ) : null}
+        {sections.nutrients ? (
         <Card
           size="small"
           title={labels.nutrientsTitle}
@@ -295,6 +306,7 @@ export function UxWateringFormPresentation({
             </Typography.Text>
           )}
         </Card>
+        ) : null}
       </Space>
 
       {pickerOpen && productsModal ? (

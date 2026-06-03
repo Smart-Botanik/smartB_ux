@@ -1,4 +1,4 @@
-import { Checkbox, Input, Select, Space, Tag, Typography } from "antd";
+import { Alert, Checkbox, Input, Select, Space, Tag, Typography } from "antd";
 import type {
   RegistryFieldInputValue,
   RegistryFieldRuntimeSpec,
@@ -10,7 +10,7 @@ import {
   unitPolicyFromPattern,
 } from "@growing/contracts";
 
-import { UxRegistryFieldValueInput } from "../UxRegistryFieldValueInput";
+import { UxSemanticFieldController } from "../UxSemanticFieldController";
 
 const { Text } = Typography;
 
@@ -26,6 +26,9 @@ export type UxRegistryProfileValuesFormProps = {
   values: Record<string, RegistryFieldInputValue>;
   onChange: (fieldId: string, next: RegistryFieldInputValue) => void;
   disabled?: boolean;
+  fieldErrors?: Record<string, string>;
+  showFieldMetaTags?: boolean;
+  showFieldIds?: boolean;
 };
 
 function readSelectOptions(formatJson?: Record<string, unknown> | null): string[] {
@@ -141,6 +144,9 @@ export function UxRegistryProfileValuesForm({
   values,
   onChange,
   disabled = false,
+  fieldErrors,
+  showFieldMetaTags = true,
+  showFieldIds = true,
 }: UxRegistryProfileValuesFormProps) {
   if (!fields.length) {
     return <Text type="secondary">Select profile fields to edit runtime values.</Text>;
@@ -156,6 +162,7 @@ export function UxRegistryProfileValuesForm({
         return (
           <div
             key={field.fieldId}
+            data-testid={`registry-field-${field.fieldId}`}
             style={{
               padding: 12,
               border: "1px solid #f0f0f0",
@@ -164,13 +171,15 @@ export function UxRegistryProfileValuesForm({
             }}
           >
             <Space direction="vertical" size={8} style={{ width: "100%" }}>
-              <Space wrap size={[4, 4]}>
-                <Text type="secondary">{field.fieldId}</Text>
-                {field.required ? <Tag color="blue">required</Tag> : null}
-              </Space>
+              {showFieldIds ? (
+                <Space wrap size={[4, 4]}>
+                  <Text type="secondary">{field.fieldId}</Text>
+                  {field.required ? <Tag color="blue">required</Tag> : null}
+                </Space>
+              ) : null}
 
               {field.valueType === "number" ? (
-                <UxRegistryFieldValueInput
+                <UxSemanticFieldController
                   label={field.label}
                   semanticKind={field.semanticKind}
                   unit={field.unit}
@@ -180,6 +189,7 @@ export function UxRegistryProfileValuesForm({
                   value={typeof input.value === "number" ? input.value : null}
                   unitValue={input.unit ?? null}
                   disabled={disabled}
+                  showMetaTags={showFieldMetaTags}
                   onChange={next =>
                     onChange(field.fieldId, {
                       value: next.value ?? undefined,
@@ -190,6 +200,10 @@ export function UxRegistryProfileValuesForm({
               ) : (
                 renderNonNumberField(field, input, onChange, disabled)
               )}
+
+              {fieldErrors?.[field.fieldId] ? (
+                <Alert type="error" showIcon message={fieldErrors[field.fieldId]} />
+              ) : null}
             </Space>
           </div>
         );

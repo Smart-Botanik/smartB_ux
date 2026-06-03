@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import type { PlantPeriodPhase } from "@growing/contracts";
+import { Select, Tag } from "antd";
+import { PLANT_PERIOD_PHASES, type PlantPeriodPhase } from "@growing/contracts";
 
 export type UxPeriodValue = PlantPeriodPhase | "";
 
@@ -11,17 +12,83 @@ export type UxPeriodFieldProps = {
   size?: "default" | "small";
 };
 
+export type UxPeriodSelectProps = {
+  value?: UxPeriodValue;
+  disabled?: boolean;
+  placeholder?: string;
+  allowClear?: boolean;
+  size?: "small" | "middle" | "large";
+  style?: CSSProperties;
+  onChange: (value: UxPeriodValue) => void;
+};
+
 export const UX_PERIOD_PHASE_OPTIONS: Array<{
   value: PlantPeriodPhase;
   label: string;
   tone: string;
   text: string;
 }> = [
-  { value: "germination", label: "Germination", tone: "#e8f9ef", text: "#1f7a43" },
-  { value: "vegetation", label: "Vegetation", tone: "#e8f1ff", text: "#1f4fa3" },
-  { value: "bloom", label: "Bloom", tone: "#f4e9ff", text: "#6c33a3" },
-  { value: "harvest", label: "Harvest", tone: "#fff1e5", text: "#9a5c1c" },
+  { value: "germination", label: "Герминация", tone: "#e6f4ff", text: "#0958d9" },
+  { value: "vegetation", label: "Вегетация", tone: "#f6ffed", text: "#237804" },
+  { value: "bloom", label: "Цветение", tone: "#fffbe6", text: "#ad8b00" },
+  { value: "preharvest", label: "Подготовка к урожаю", tone: "#f9f0ff", text: "#722ed1" },
+  { value: "harvest", label: "Харвест", tone: "#fff1f0", text: "#cf1322" },
 ];
+
+const PERIOD_OPTION_BY_VALUE = new Map(
+  UX_PERIOD_PHASE_OPTIONS.map(option => [option.value, option]),
+);
+
+export function plantPeriodPhaseLabel(value: PlantPeriodPhase): string {
+  return PERIOD_OPTION_BY_VALUE.get(value)?.label ?? value;
+}
+
+function PeriodTag({ value }: { value: PlantPeriodPhase }) {
+  const option = PERIOD_OPTION_BY_VALUE.get(value);
+  if (!option) {
+    return <span>{value}</span>;
+  }
+
+  return (
+    <Tag
+      style={{
+        marginInlineEnd: 0,
+        borderColor: option.text,
+        background: option.tone,
+        color: option.text,
+      }}
+    >
+      {option.label}
+    </Tag>
+  );
+}
+
+export function UxPeriodSelect({
+  value,
+  disabled = false,
+  placeholder = "Не выбран",
+  allowClear = true,
+  size = "middle",
+  style,
+  onChange,
+}: UxPeriodSelectProps) {
+  return (
+    <Select
+      allowClear={allowClear}
+      disabled={disabled}
+      placeholder={placeholder}
+      size={size}
+      style={style}
+      value={value || undefined}
+      options={PLANT_PERIOD_PHASES.map(phase => ({
+        value: phase,
+        label: <PeriodTag value={phase} />,
+      }))}
+      optionLabelProp="label"
+      onChange={next => onChange((next ?? "") as UxPeriodValue)}
+    />
+  );
+}
 
 export function UxPeriodField({
   value,
@@ -128,29 +195,36 @@ export const UX_TABLE_PERIOD_PHASE_TAG_SX: Record<PlantPeriodPhase, CSSPropertie
   germination: {
     marginInlineEnd: 0,
     borderRadius: 2,
-    background: "#dfe8e2",
-    color: "#3d4a42",
-    border: "1px solid #c3ccc6",
+    background: "#e6f4ff",
+    color: "#0958d9",
+    border: "1px solid #91caff",
   },
   vegetation: {
     marginInlineEnd: 0,
     borderRadius: 2,
-    background: "#e0e4eb",
-    color: "#3a4252",
-    border: "1px solid #c4c8d2",
+    background: "#f6ffed",
+    color: "#237804",
+    border: "1px solid #b7eb8f",
   },
   bloom: {
     marginInlineEnd: 0,
     borderRadius: 2,
-    background: "#e8e2eb",
-    color: "#4a4254",
-    border: "1px solid #cfc8d3",
+    background: "#fffbe6",
+    color: "#ad8b00",
+    border: "1px solid #ffe58f",
+  },
+  preharvest: {
+    marginInlineEnd: 0,
+    borderRadius: 2,
+    background: "#f9f0ff",
+    color: "#722ed1",
+    border: "1px solid #d3adf7",
   },
   harvest: {
     marginInlineEnd: 0,
     borderRadius: 2,
-    background: "#ebe6e0",
-    color: "#524a42",
-    border: "1px solid #d6d1ca",
+    background: "#fff1f0",
+    color: "#cf1322",
+    border: "1px solid #ffa39e",
   },
 };

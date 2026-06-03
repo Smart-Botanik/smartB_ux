@@ -669,7 +669,7 @@ export function UxCreateBatchModal({
         width={720}
         centered
         keyboard={false}
-        maskClosable={!loading}
+        maskClosable={!loading && !pickerOpen}
         destroyOnClose
         styles={{ body: { paddingTop: 8 } }}
       >
