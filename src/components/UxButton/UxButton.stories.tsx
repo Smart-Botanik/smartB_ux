@@ -30,3 +30,17 @@ export const Ghost: Story = {
     variant: "ghost"
   }
 };
+
+export const GrowPrimary: Story = {
+  args: {
+    variant: "growPrimary",
+    children: "Добавить метрику"
+  }
+};
+
+export const GrowSecondary: Story = {
+  args: {
+    variant: "growSecondary",
+    children: "Описать локацию"
+  }
+};

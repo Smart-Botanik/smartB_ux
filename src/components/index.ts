@@ -22,6 +22,48 @@ export { UxBrandsModalPresentation } from "./UxBrandsModalPresentation";
 export type { UxBrandsModalPresentationProps } from "./UxBrandsModalPresentation";
 export { UxButton } from "./UxButton";
 export type { UxButtonProps } from "./UxButton";
+export { UxGrowThemeProvider, useUxGrowTheme } from "./UxGrowThemeProvider";
+export type { UxGrowAppearance, UxGrowThemeProviderProps } from "./UxGrowThemeProvider";
+export { UxMetricCard } from "./UxMetricCard";
+export type { UxMetricCardAvatar, UxMetricCardProps } from "./UxMetricCard";
+export { UxMonoLabel } from "./UxMonoLabel";
+export type { UxMonoLabelProps, UxMonoLabelVariant } from "./UxMonoLabel";
+export { UxObservationFormPanel } from "./UxObservationFormPanel";
+export type { UxObservationFormPanelProps } from "./UxObservationFormPanel";
+export { UxPageHeader } from "./UxPageHeader";
+export type { UxPageHeaderProps } from "./UxPageHeader";
+export { UxQuickActionBar } from "./UxQuickActionBar";
+export type { UxQuickActionBarProps, UxQuickActionItem } from "./UxQuickActionBar";
+export { UxQuickActionPill } from "./UxQuickActionPill";
+export type { UxQuickActionPillProps } from "./UxQuickActionPill";
+export { UxSparkline } from "./UxSparkline";
+export type { UxSparklineProps } from "./UxSparkline";
+export { UxStatusBadge } from "./UxStatusBadge";
+export type { UxStatusBadgeProps, UxStatusBadgeTone } from "./UxStatusBadge";
+export { UxSurfaceCard } from "./UxSurfaceCard";
+export type { UxSurfaceCardProps } from "./UxSurfaceCard";
+export {
+  UxGrowAppShell,
+  UxGlassSidebar,
+  UxMobileTopBar,
+  UxMobileBottomNav,
+  UX_GROW_DEFAULT_BOTTOM_NAV,
+  UX_GROW_DEFAULT_BRAND,
+  UX_GROW_DEFAULT_FOOTER_NAV,
+  UX_GROW_DEFAULT_MAIN_NAV,
+  UX_GROW_NAV_KEYS,
+  UX_GROW_SHELL_LAYOUT,
+} from "./UxGrowAppShell";
+export type {
+  UxGrowAppShellProps,
+  UxGlassSidebarProps,
+  UxMobileBottomNavProps,
+  UxMobileTopBarProps,
+  UxGrowNavItem,
+  UxGrowNavKey,
+  UxGrowNavRenderLink,
+  UxGrowShellBrand,
+} from "./UxGrowAppShell";
 export {
   UxCreateBatchModal,
   UX_PLANT_BATCH_TABLE_STYLES,
@@ -38,10 +80,12 @@ export type {
   UxCreateBatchGroupsTableEmptyCopy,
   UxCreateBatchItem,
   UxCreateBatchModalProps,
+  UxCreateBatchPlantEditorArgs,
   UxCreateBatchProductsModalConfig,
   UxCreateBatchRemoveGroupContext,
   UxCreateBatchRenderSelectedProductArgs,
   UxCreateBatchSubmitPayload,
+  UxCreateBatchSubmitPayloadItem,
   UxPlantBatchTableColumnLabels,
 } from "./UxCreateBatchModal";
 export {

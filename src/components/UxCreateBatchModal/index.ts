@@ -4,10 +4,12 @@ export type {
   UxCreateBatchGroupsTableEmptyCopy,
   UxCreateBatchItem,
   UxCreateBatchModalProps,
+  UxCreateBatchPlantEditorArgs,
   UxCreateBatchProductsModalConfig,
   UxCreateBatchRemoveGroupContext,
   UxCreateBatchRenderSelectedProductArgs,
   UxCreateBatchSubmitPayload,
+  UxCreateBatchSubmitPayloadItem,
 } from "./UxCreateBatchModal";
 export { UX_PLANT_BATCH_TABLE_STYLES } from "./UxPlantBatchTableStyles";
 export {

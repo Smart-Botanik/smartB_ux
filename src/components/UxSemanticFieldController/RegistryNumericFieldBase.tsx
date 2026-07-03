@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Alert, InputNumber, Select, Space, Tag, Typography } from "antd";
 import { isAmbiguousEcPpmPair } from "@growing/contracts";
 
+import { useUxGrowTheme } from "../UxGrowThemeProvider";
+import { techOrganicTypography } from "../../tokens";
 import { useRegistryNumericField } from "./useRegistryNumericField";
 import type { UxSemanticNumericFieldProps } from "./types";
 
@@ -28,6 +30,9 @@ export function RegistryNumericFieldBase({
   size = "middle",
   footer,
 }: RegistryNumericFieldBaseProps) {
+  const { appearance } = useUxGrowTheme();
+  const isGrow = appearance === "grow";
+
   const {
     unitOptions,
     selectedUnit,
@@ -39,7 +44,22 @@ export function RegistryNumericFieldBase({
 
   return (
     <Space direction="vertical" style={{ width: "100%" }} size="small">
-      {label ? <Text>{label}</Text> : null}
+      {label ? (
+        <Text
+          style={
+            isGrow
+              ? {
+                  fontFamily: techOrganicTypography.fontMono,
+                  fontSize: techOrganicTypography.labelMd.fontSize,
+                  fontWeight: techOrganicTypography.labelMd.fontWeight,
+                  letterSpacing: techOrganicTypography.labelMd.letterSpacing,
+                }
+              : undefined
+          }
+        >
+          {label}
+        </Text>
+      ) : null}
       <Space.Compact style={{ width: "100%" }}>
         <InputNumber
           size={size}

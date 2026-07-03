@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import {
   Alert,
@@ -57,6 +57,17 @@ export type UxCreateBatchItem = {
 };
 
 /** Host app can render the chosen product (e.g. `ProductsBar.Item` in the main frontend). */
+export type UxCreateBatchPlantEditorArgs = {
+  item: UxCreateBatchItem;
+  loading: boolean;
+  enabled: boolean;
+  updateItem: (patch: Partial<UxCreateBatchItem>) => void;
+  onOpenPicker: () => void;
+  productCardLabels?: UxSelectedProductCardProps["labels"];
+  productContentLabels?: string[];
+  registerPersistHandler: (handler: (() => Partial<UxCreateBatchItem> | void) | null) => void;
+};
+
 export type UxCreateBatchRenderSelectedProductArgs = {
   productId: string;
   name: string;
@@ -69,11 +80,16 @@ export type UxCreateBatchRenderSelectedProductArgs = {
   onClear: () => void;
 };
 
+export type UxCreateBatchSubmitPayloadItem = Omit<UxCreateBatchItem, "id"> & {
+  /** Client row id from the modal table; used to restore registry draft scope on submit. */
+  draftId: string;
+};
+
 export type UxCreateBatchSubmitPayload = {
   batchName: string;
   /** Set when optional diary selector is shown and user picks a diary. */
   diaryId?: string;
-  items: Array<Omit<UxCreateBatchItem, "id">>;
+  items: UxCreateBatchSubmitPayloadItem[];
 };
 
 export type UxCreateBatchDiarySelectConfig = {
@@ -171,6 +187,10 @@ export type UxCreateBatchModalProps = {
   hideQuantity?: boolean;
   /** Label for the group/batch name field on the table step (default: "Batch name *"). */
   batchNameFieldLabel?: string;
+  /**
+   * Replaces the built-in group editor with host-provided plant form (e.g. registry-driven fields).
+   */
+  renderPlantEditor?: (args: UxCreateBatchPlantEditorArgs) => ReactNode;
   onClose: () => void;
   onSubmit?: (payload: UxCreateBatchSubmitPayload) => void;
 };
@@ -286,6 +306,7 @@ export function UxCreateBatchModal({
   groupsTableEmptyCopy: groupsTableEmptyCopyProp,
   hideQuantity = false,
   batchNameFieldLabel = "Batch name *",
+  renderPlantEditor,
   onClose,
   onSubmit,
 }: UxCreateBatchModalProps) {
@@ -297,6 +318,7 @@ export function UxCreateBatchModal({
   const [level, setLevel] = useState<TModalLevel>("table");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [plantNameEditorTouched, setPlantNameEditorTouched] = useState(false);
+  const plantEditorPersistRef = useRef<(() => Partial<UxCreateBatchItem> | void) | null>(null);
 
   const primarySubmitLabel =
     submitButtonLabel ?? (mode === "edit" ? "Save batch" : "Create batch");
@@ -390,7 +412,24 @@ export function UxCreateBatchModal({
 
   useEffect(() => {
     setPlantNameEditorTouched(false);
+    plantEditorPersistRef.current = null;
   }, [editingItemId]);
+
+  const persistPlantEditorDraft = (itemId: string | null) => {
+    if (!itemId || !plantEditorPersistRef.current) {
+      return;
+    }
+    const patch = plantEditorPersistRef.current();
+    if (patch && Object.keys(patch).length > 0) {
+      updateItem(itemId, patch);
+    }
+  };
+
+  const leavePlantEditor = () => {
+    persistPlantEditorDraft(editingItemId);
+    setLevel("table");
+    setEditingItemId(null);
+  };
 
   useEffect(() => {
     if (!open) {
@@ -419,8 +458,7 @@ export function UxCreateBatchModal({
       if (level === "editor") {
         e.preventDefault();
         e.stopPropagation();
-        setLevel("table");
-        setEditingItemId(null);
+        leavePlantEditor();
         return;
       }
 
@@ -512,6 +550,8 @@ export function UxCreateBatchModal({
   };
 
   const handleSubmit = () => {
+    persistPlantEditorDraft(editingItemId);
+
     const normalizedBatchName = batchName.trim();
     const prepared = items.map(({ id, ...rest }) => {
       const q = hideQuantity
@@ -521,6 +561,7 @@ export function UxCreateBatchModal({
           : Math.max(1, Number(rest.quantity || 1));
       return {
         ...rest,
+        draftId: id,
         name: rest.name.trim(),
         quantity: q,
       };
@@ -618,8 +659,7 @@ export function UxCreateBatchModal({
             if (!current || !isValidPlantName(current.name)) {
               return;
             }
-            setLevel("table");
-            setEditingItemId(null);
+            leavePlantEditor();
           }}
         >
           {resolvedEditorBackLabel}
@@ -755,10 +795,7 @@ export function UxCreateBatchModal({
               <Button
                 size="small"
                 disabled={loading}
-                onClick={() => {
-                  setLevel("table");
-                  setEditingItemId(null);
-                }}
+                onClick={leavePlantEditor}
               >
                 Back to table
               </Button>
@@ -768,6 +805,19 @@ export function UxCreateBatchModal({
             </Flex>
 
             {editingItem ? (
+              renderPlantEditor ? (
+                renderPlantEditor({
+                  item: editingItem,
+                  loading,
+                  enabled: open,
+                  updateItem: patch => updateItem(editingItem.id, patch),
+                  onOpenPicker: () => setPickerItemId(editingItem.id),
+                  productCardLabels,
+                  registerPersistHandler: handler => {
+                    plantEditorPersistRef.current = handler;
+                  },
+                })
+              ) : (
               <Card size="small" title="Group fields">
                 <Space direction="vertical" size="small" style={{ width: "100%" }}>
                   <Row gutter={[12, 8]}>
@@ -950,6 +1000,7 @@ export function UxCreateBatchModal({
                   ) : null}
                 </Space>
               </Card>
+              )
             ) : null}
           </>
         )}
