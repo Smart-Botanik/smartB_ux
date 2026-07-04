@@ -7,3 +7,4 @@ export {
   techOrganicTypography,
 } from "./techOrganicTokens";
 export { uxGrowAntdTheme } from "./uxGrowAntdTheme";
+export { uxGrowFormControlComponents } from "./uxGrowFormControlTheme";

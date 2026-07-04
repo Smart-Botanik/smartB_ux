@@ -1,2 +1,2 @@
 export { UxPageHeader } from "./UxPageHeader";
-export type { UxPageHeaderProps } from "./UxPageHeader";
+export type { UxPageHeaderProps, UxPageHeaderVariant } from "./UxPageHeader";

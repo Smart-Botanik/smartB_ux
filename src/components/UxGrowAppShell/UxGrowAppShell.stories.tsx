@@ -27,8 +27,9 @@ type Story = StoryObj<typeof UxGrowAppShell>;
 
 function MetricsHubContent() {
   return (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", gap: techOrganicSpacing.xl }}>
       <UxPageHeader
+        variant="hub"
         title="Доброе утро, Алексей"
         subtitle="3 активные метрики · 12 растений · 2 локации"
       />
@@ -63,7 +64,7 @@ function MetricsHubContent() {
           updatedAt="2ч назад"
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -104,7 +105,7 @@ export const LocationDetailMobile: Story = {
         mobileTopBarTrailing={<span style={{ opacity: 0.6 }}>🔔 ⚙️</span>}
         onNavigate={key => setActiveKey(key)}
       >
-        <UxPageHeader title="Гроубокс 120" subtitle="4 места · 2 занято" />
+        <UxPageHeader variant="detail" title="Гроубокс 120" subtitle="4 места · 2 занято" />
       </UxGrowAppShell>
     );
   },

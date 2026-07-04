@@ -17,8 +17,15 @@ export function UxObservationFormPanel({
   children,
 }: UxObservationFormPanelProps) {
   return (
-    <UxSurfaceCard style={{ display: "flex", flexDirection: "column", gap: techOrganicSpacing.lg }}>
-      <div>
+    <UxSurfaceCard
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: techOrganicSpacing.lg,
+        flex: "0 0 auto",
+      }}
+    >
+      <div style={{ flex: "0 0 auto" }}>
         <h3
           style={{
             margin: 0,

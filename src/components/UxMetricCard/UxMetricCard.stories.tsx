@@ -30,8 +30,9 @@ type Story = StoryObj;
 
 export const HubPreview: Story = {
   render: () => (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", gap: techOrganicSpacing.xl }}>
       <UxPageHeader
+        variant="hub"
         title="Доброе утро, Алексей"
         subtitle="3 активные метрики · 12 растений · 2 локации"
       />
@@ -76,6 +77,6 @@ export const HubPreview: Story = {
           updatedAt="2ч назад"
         />
       </div>
-    </>
+    </div>
   ),
 };

@@ -1,6 +1,7 @@
 import type { ThemeConfig } from "antd";
 
 import { techOrganicColors, techOrganicRadii, techOrganicTypography } from "./techOrganicTokens";
+import { uxGrowFormControlComponents } from "./uxGrowFormControlTheme";
 
 /** Ant Design theme aligned with Tech-Organic Precision prototypes. */
 export const uxGrowAntdTheme: ThemeConfig = {
@@ -30,25 +31,12 @@ export const uxGrowAntdTheme: ThemeConfig = {
       borderRadius: techOrganicRadii.pill,
       fontWeight: 700,
     },
-    Input: {
-      activeBorderColor: techOrganicColors.primaryContainer,
-      hoverBorderColor: techOrganicColors.primary,
-      borderRadius: techOrganicRadii.md,
-    },
-    InputNumber: {
-      activeBorderColor: techOrganicColors.primaryContainer,
-      hoverBorderColor: techOrganicColors.primary,
-      borderRadius: techOrganicRadii.md,
-    },
-    Select: {
-      optionSelectedBg: techOrganicColors.surfaceContainerLow,
-      borderRadius: techOrganicRadii.md,
-    },
     Card: {
       borderRadiusLG: techOrganicRadii.lg,
     },
     Tag: {
       borderRadiusSM: techOrganicRadii.sm,
     },
+    ...uxGrowFormControlComponents,
   },
 };

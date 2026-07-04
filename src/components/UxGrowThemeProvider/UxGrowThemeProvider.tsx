@@ -33,6 +33,7 @@ export function UxGrowThemeProvider({
     <UxGrowThemeContext.Provider value={{ appearance }}>
       <div
         style={{
+          display: "contents",
           fontFamily: enabled ? techOrganicTypography.fontSans : undefined,
           color: enabled ? techOrganicColors.onSurface : undefined,
         }}

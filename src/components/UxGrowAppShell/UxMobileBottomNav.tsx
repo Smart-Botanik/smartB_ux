@@ -18,8 +18,15 @@ export type UxMobileBottomNavProps = {
   style?: CSSProperties;
 };
 
-function defaultRenderLink(_item: UxGrowNavItem, children: ReactNode) {
-  return children;
+function defaultRenderLink(item: UxGrowNavItem, children: ReactNode) {
+  if (!item.href) {
+    return children;
+  }
+  return (
+    <a href={item.href} style={{ textDecoration: "none", color: "inherit" }}>
+      {children}
+    </a>
+  );
 }
 
 function BottomNavSlot({
@@ -88,24 +95,35 @@ function BottomNavSlot({
     return <>{renderNavLink(item, fab)}</>;
   }
 
-  const slot = (
-    <button
-      type="button"
-      onClick={handleClick}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: techOrganicSpacing.unit,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: `${techOrganicSpacing.xs}px ${techOrganicSpacing.sm}px`,
-        color: active ? techOrganicColors.primary : techOrganicColors.onSurfaceVariant,
-        fontWeight: active ? 700 : 400,
-      }}
-    >
+  const slotStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: techOrganicSpacing.unit,
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: `${techOrganicSpacing.xs}px ${techOrganicSpacing.sm}px`,
+    color: active ? techOrganicColors.primary : techOrganicColors.onSurfaceVariant,
+    fontWeight: active ? 700 : 400,
+  };
+
+  const slot = item.href ? (
+    <span onClick={handleClick} style={slotStyle}>
+      <span style={{ display: "flex", fontSize: 22 }}>{item.icon}</span>
+      <span
+        style={{
+          fontFamily: techOrganicTypography.fontMono,
+          fontSize: 10,
+          letterSpacing: "0.05em",
+        }}
+      >
+        {item.label}
+      </span>
+    </span>
+  ) : (
+    <button type="button" onClick={handleClick} style={slotStyle}>
       <span style={{ display: "flex", fontSize: 22 }}>{item.icon}</span>
       <span
         style={{

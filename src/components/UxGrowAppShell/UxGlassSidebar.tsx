@@ -15,12 +15,69 @@ export type UxGlassSidebarProps = {
   footerNav?: UxGrowNavItem[];
   activeKey: string;
   onNavigate?: (key: string) => void;
+  onBrandClick?: () => void;
   renderNavLink?: UxGrowNavRenderLink;
   style?: CSSProperties;
 };
 
-function defaultRenderLink(_item: UxGrowNavItem, children: ReactNode) {
-  return children;
+function defaultRenderLink(item: UxGrowNavItem, children: ReactNode) {
+  if (!item.href) {
+    return children;
+  }
+  return (
+    <a href={item.href} style={{ textDecoration: "none", color: "inherit" }}>
+      {children}
+    </a>
+  );
+}
+
+function BrandContent({ brand }: { brand: UxGrowShellBrand }) {
+  return (
+    <>
+      <div
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: techOrganicRadii.lg,
+          background: techOrganicColors.primary,
+          color: techOrganicColors.onPrimary,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {brand.logo ?? "🌱"}
+      </div>
+      <div>
+        <div
+          style={{
+            ...techOrganicTypography.headlineSm,
+            fontFamily: techOrganicTypography.fontSans,
+            color: techOrganicColors.primary,
+            fontWeight: 700,
+            lineHeight: 1.1,
+          }}
+        >
+          {brand.title}
+        </div>
+        {brand.tagline ? (
+          <div
+            style={{
+              fontFamily: techOrganicTypography.fontMono,
+              fontSize: 10,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: `${techOrganicColors.secondary}99`,
+              marginTop: 2,
+            }}
+          >
+            {brand.tagline}
+          </div>
+        ) : null}
+      </div>
+    </>
+  );
 }
 
 function NavButton({
@@ -71,9 +128,9 @@ function NavButton({
   };
 
   const node = item.href ? (
-    <a href={item.href} style={{ ...base, textDecoration: "none" }} onClick={handleClick}>
+    <span style={{ ...base, textDecoration: "none" }} onClick={handleClick}>
       {content}
-    </a>
+    </span>
   ) : (
     <button type="button" style={base} onClick={handleClick}>
       {content}
@@ -89,6 +146,7 @@ export function UxGlassSidebar({
   footerNav = [],
   activeKey,
   onNavigate,
+  onBrandClick,
   renderNavLink = defaultRenderLink,
   style,
 }: UxGlassSidebarProps) {
@@ -110,57 +168,38 @@ export function UxGlassSidebar({
         ...style,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: techOrganicSpacing.sm,
-          marginBottom: techOrganicSpacing.lg,
-        }}
-      >
-        <div
+      {onBrandClick ? (
+        <button
+          type="button"
+          onClick={onBrandClick}
+          aria-label={brand.title}
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: techOrganicRadii.lg,
-            background: techOrganicColors.primary,
-            color: techOrganicColors.onPrimary,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            gap: techOrganicSpacing.sm,
+            marginBottom: techOrganicSpacing.lg,
+            padding: 0,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
           }}
         >
-          {brand.logo ?? "🌱"}
+          <BrandContent brand={brand} />
+        </button>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: techOrganicSpacing.sm,
+            marginBottom: techOrganicSpacing.lg,
+          }}
+        >
+          <BrandContent brand={brand} />
         </div>
-        <div>
-          <div
-            style={{
-              ...techOrganicTypography.headlineSm,
-              fontFamily: techOrganicTypography.fontSans,
-              color: techOrganicColors.primary,
-              fontWeight: 700,
-              lineHeight: 1.1,
-            }}
-          >
-            {brand.title}
-          </div>
-          {brand.tagline ? (
-            <div
-              style={{
-                fontFamily: techOrganicTypography.fontMono,
-                fontSize: 10,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: `${techOrganicColors.secondary}99`,
-                marginTop: 2,
-              }}
-            >
-              {brand.tagline}
-            </div>
-          ) : null}
-        </div>
-      </div>
+      )}
 
       <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: techOrganicSpacing.xs }}>
         {mainNav.map(item => (

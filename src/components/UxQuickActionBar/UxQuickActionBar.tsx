@@ -23,7 +23,6 @@ export function UxQuickActionBar({ actions, style }: UxQuickActionBarProps) {
         display: "flex",
         flexWrap: "wrap",
         gap: techOrganicSpacing.sm,
-        marginBottom: techOrganicSpacing.lg,
         ...style,
       }}
     >

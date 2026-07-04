@@ -1,6 +1,12 @@
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
 
-import { techOrganicColors, techOrganicRadii, techOrganicShadows, techOrganicSpacing } from "../../tokens";
+import {
+  techOrganicColors,
+  techOrganicRadii,
+  techOrganicShadows,
+  techOrganicSpacing,
+  techOrganicTypography,
+} from "../../tokens";
 
 export type UxQuickActionPillProps = HTMLAttributes<HTMLButtonElement> & {
   icon?: ReactNode;
@@ -36,9 +42,11 @@ export function UxQuickActionPill({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: techOrganicSpacing.xs,
-        padding: `${techOrganicSpacing.sm}px ${techOrganicSpacing.lg}px`,
+        gap: techOrganicSpacing.unit,
+        padding: `${techOrganicSpacing.unit * 2}px ${techOrganicSpacing.md}px`,
         borderRadius: techOrganicRadii.pill,
+        fontSize: techOrganicTypography.labelSm.fontSize,
+        lineHeight: `${techOrganicTypography.labelSm.lineHeight}px`,
         cursor: "pointer",
         transition: "transform 150ms ease, background 150ms ease",
         ...base,

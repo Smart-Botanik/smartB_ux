@@ -20,6 +20,7 @@ export type UxGrowAppShellProps = {
   mobileTitle?: string;
   mobileTopBarTrailing?: ReactNode;
   onNavigate?: (key: string) => void;
+  onBrandClick?: () => void;
   renderNavLink?: UxGrowNavRenderLink;
   /** Wrap with grow antd theme (default true). */
   withTheme?: boolean;
@@ -37,6 +38,7 @@ export function UxGrowAppShell({
   mobileTitle,
   mobileTopBarTrailing,
   onNavigate,
+  onBrandClick,
   renderNavLink,
   withTheme = true,
   mainStyle,
@@ -47,7 +49,9 @@ export function UxGrowAppShell({
   const shell = (
     <div
       style={{
-        minHeight: "100vh",
+        display: "block",
+        position: "relative",
+        width: "100%",
         background: techOrganicColors.background,
         color: techOrganicColors.onSurface,
         ...style,
@@ -60,6 +64,7 @@ export function UxGrowAppShell({
           footerNav={footerNav}
           activeKey={activeKey}
           onNavigate={onNavigate}
+          onBrandClick={onBrandClick}
           renderNavLink={renderNavLink}
         />
       ) : (
@@ -79,8 +84,16 @@ export function UxGrowAppShell({
 
       <main
         style={{
-          minHeight: "100vh",
+          display: "block",
+          boxSizing: "border-box",
+          minWidth: 0,
+          minHeight: 0,
+          flex: "none",
           marginLeft: isDesktop ? UX_GROW_SHELL_LAYOUT.sidebarWidth : 0,
+          width: isDesktop
+            ? `calc(100% - ${UX_GROW_SHELL_LAYOUT.sidebarWidth}px)`
+            : "100%",
+          maxWidth: isDesktop ? techOrganicSpacing.containerMax : undefined,
           paddingTop: isDesktop
             ? UX_GROW_SHELL_LAYOUT.desktopMainPaddingTop
             : UX_GROW_SHELL_LAYOUT.mobileTopBarHeight + techOrganicSpacing.md,
@@ -90,9 +103,6 @@ export function UxGrowAppShell({
           paddingInline: isDesktop
             ? techOrganicSpacing.marginDesktop
             : techOrganicSpacing.marginMobile,
-          maxWidth: isDesktop
-            ? UX_GROW_SHELL_LAYOUT.sidebarWidth + 1280
-            : undefined,
           ...mainStyle,
         }}
       >

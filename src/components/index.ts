@@ -45,7 +45,7 @@ export type { UxMonoLabelProps, UxMonoLabelVariant } from "./UxMonoLabel";
 export { UxObservationFormPanel } from "./UxObservationFormPanel";
 export type { UxObservationFormPanelProps } from "./UxObservationFormPanel";
 export { UxPageHeader } from "./UxPageHeader";
-export type { UxPageHeaderProps } from "./UxPageHeader";
+export type { UxPageHeaderProps, UxPageHeaderVariant } from "./UxPageHeader";
 export { UxPlantStageSection } from "./UxPlantStageSection";
 export type {
   UxPlantStageItem,
@@ -58,6 +58,8 @@ export { UxQuickActionPill } from "./UxQuickActionPill";
 export type { UxQuickActionPillProps } from "./UxQuickActionPill";
 export { UxSeatGrid } from "./UxSeatGrid";
 export type { UxSeatCell, UxSeatCellState, UxSeatGridProps } from "./UxSeatGrid";
+export { UxSegmentedControl } from "./UxSegmentedControl";
+export type { UxSegmentedControlOption, UxSegmentedControlProps } from "./UxSegmentedControl";
 export { UxSparkline } from "./UxSparkline";
 export type { UxSparklineProps } from "./UxSparkline";
 export { UxStatusBadge } from "./UxStatusBadge";
