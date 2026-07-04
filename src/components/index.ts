@@ -30,12 +30,16 @@ export type {
 } from "./UxChartPanel";
 export { UxEventTimeline } from "./UxEventTimeline";
 export type { UxEventTimelineItem, UxEventTimelineProps } from "./UxEventTimeline";
+export { UxFormField, UX_FORM_FIELD_LABEL_STYLE } from "./UxFormField";
+export type { UxFormFieldProps } from "./UxFormField";
 export { UxGrowThemeProvider, useUxGrowTheme } from "./UxGrowThemeProvider";
 export type { UxGrowAppearance, UxGrowThemeProviderProps } from "./UxGrowThemeProvider";
 export { UxLocationCard } from "./UxLocationCard";
 export type { UxLocationCardAccent, UxLocationCardProps } from "./UxLocationCard";
 export { UxMetricCard } from "./UxMetricCard";
 export type { UxMetricCardAvatar, UxMetricCardProps } from "./UxMetricCard";
+export { UxMaterialSymbol } from "./UxMaterialSymbol";
+export type { UxMaterialSymbolProps } from "./UxMaterialSymbol";
 export { UxMonoLabel } from "./UxMonoLabel";
 export type { UxMonoLabelProps, UxMonoLabelVariant } from "./UxMonoLabel";
 export { UxObservationFormPanel } from "./UxObservationFormPanel";
