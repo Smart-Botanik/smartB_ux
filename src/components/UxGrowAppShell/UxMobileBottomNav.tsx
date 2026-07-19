@@ -2,7 +2,6 @@ import type { CSSProperties, ReactNode } from "react";
 
 import {
   techOrganicColors,
-  techOrganicRadii,
   techOrganicShadows,
   techOrganicSpacing,
   techOrganicTypography,

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { RegistryUnitPolicy, TNumericFormatFields } from "@growing/contracts";
+import type { TNumericFormatFields } from "@growing/contracts";
 import {
   resolveAllowedUnits,
   resolveCanonicalUnit,

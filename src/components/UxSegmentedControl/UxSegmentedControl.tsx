@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import { techOrganicColors, techOrganicRadii, techOrganicSpacing, techOrganicTypography } from "../../tokens";
+import { techOrganicColors, techOrganicRadii, techOrganicTypography } from "../../tokens";
 
 export type UxSegmentedControlOption<T extends string = string> = {
   value: T;

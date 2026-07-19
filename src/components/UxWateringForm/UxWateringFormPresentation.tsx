@@ -18,7 +18,6 @@ import { UxSelectedProductCard } from "../UxSelectedProductCard";
 import type {
   UxWateringFormLabels,
   UxWateringFormPresentationProps,
-  UxWateringFormValue,
   UxWateringNutrientRow,
   UxWateringSolutionValue,
 } from "./types";
